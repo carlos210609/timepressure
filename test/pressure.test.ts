@@ -1,11 +1,3 @@
-import { describe, expect, it } from 'vitest';
-import { calculatePressure, recordRevenue } from '../src/pressure.js';
-
-const base = { cycleStartedAt: 0, targetCents: 1, cycleRevenueCents: 0, pressure: 0, status: 'alive' as const, deadline: 1000 };
-
-describe('pressure engine', () => {
-  it('starts at zero', () => expect(calculatePressure(0, base).pressure).toBe(0));
-  it('increases with time', () => expect(calculatePressure(500, base).pressure).toBeGreaterThan(0));
-  it('dies after missed deadline', () => expect(calculatePressure(1000, base).status).toBe('dead'));
-  it('revenue target resets the cycle', () => { const s = recordRevenue(base, 1, 500); expect(s.status).toBe('alive'); expect(s.cycleRevenueCents).toBe(0); expect(s.cycleStartedAt).toBe(500); });
-});
+import{describe,expect,it}from'vitest';import{calculatePressure,recordRevenue}from'../src/pressure.js';
+const base={cycleStartedAt:0,targetCents:1,cycleRevenueCents:0,pressure:0,status:'alive' as const,deadline:1000};
+describe('pressure engine',()=>{it('starts at zero',()=>expect(calculatePressure(0,base).pressure).toBe(0));it('increases with time',()=>expect(calculatePressure(500,base).pressure).toBeGreaterThan(0));it('dies after missed deadline',()=>expect(calculatePressure(1000,base).status).toBe('dead'));it('revenue target resets the cycle',()=>{const s=recordRevenue(base,1,500);expect(s.status).toBe('alive');expect(s.cycleRevenueCents).toBe(0);expect(s.cycleStartedAt).toBe(500)})});
