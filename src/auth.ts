@@ -1,5 +1,5 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
@@ -22,7 +22,7 @@ interface Stored{host_id:string; credential?:Credential}
 function filePath(){return path.join(os.homedir(),'.config','timepressure','credentials.json')}
 async function save(data:Stored){
  const file=filePath(); await mkdir(path.dirname(file),{recursive:true});
- const tmp=file+'.tmp'; await writeFile(tmp,JSON.stringify(data,null,2),{mode:0o600}); await chmod(tmp,0o600); await writeFile(file,await readFile(tmp),{mode:0o600});
+ const tmp=file+'.tmp'; await writeFile(tmp,JSON.stringify(data,null,2),{mode:0o600}); await chmod(tmp,0o600); await rename(tmp,file);
 }
 async function load():Promise<Stored>{
  try{return JSON.parse(await readFile(filePath(),'utf8')) as Stored}catch{
