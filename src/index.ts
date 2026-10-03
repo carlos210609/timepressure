@@ -4,6 +4,7 @@ import { Agent } from './agent.js';
 import { calculatePressure, recordRevenue, resetCycle } from './pressure.js';
 import crypto from 'node:crypto';
 import { wallet, payout, payoutEarned, usdToLtc } from './wallet.js';
+import { login, status as authStatus, logout } from './auth.js';
 
 const config = loadConfig();
 const store = new Store(config.dataDir);
@@ -31,6 +32,9 @@ Commands:
 async function main() {
   const [cmd, sub, amount, ...rest] = process.argv.slice(2);
   if (!cmd || cmd === 'help') return usage();
+  if (cmd === 'login' && sub === 'status') return authStatus();
+  if (cmd === 'login') return login();
+  if (cmd === 'logout') return logout();
 
   if (cmd === 'status' || cmd === 'pressure') {
     state.pressure = calculatePressure(Date.now(), state.pressure);
