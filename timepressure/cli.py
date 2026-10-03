@@ -3,12 +3,14 @@ import json
 import sys
 import time
 import uuid
+
 from .agent import Agent
 from .config import load_config
 from .litecoin import LitecoinRPC, usd_to_ltc
 from .models import RevenueEvent
 from .pressure import calculate_pressure, record_revenue, reset_cycle
 from .store import Store
+
 
 def main():
     config = load_config()
@@ -43,6 +45,7 @@ def main():
     quote.add_argument("rate", type=float)
 
     args = parser.parse_args()
+
     if args.cmd is None:
         from .gui import launch
         launch()
@@ -62,10 +65,12 @@ def main():
             return 0
 
         if args.cmd == "doctor":
+            from .oauth import OAuth
             print(json.dumps({
                 "python": sys.version.split()[0],
                 "dataDir": config.data_dir,
-                "modelConfigured": bool(config.api_key),\n                "chatgptOAuth": __import__("timepressure.oauth", fromlist=["OAuth"]).OAuth().connected(),
+                "modelConfigured": bool(config.api_key),
+                "chatgptOAuth": OAuth().connected(),
                 "networkEnabled": config.allow_network,
                 "target": f"USD {config.target_cents/100:.2f}",
                 "cycleMs": config.cycle_ms,
@@ -107,15 +112,25 @@ def main():
                 print(rpc.new_address(args.label))
                 return 0
             if args.sub == "quote":
-                print(json.dumps({"usd": args.usd, "ltcUsd": args.rate, "ltc": usd_to_ltc(args.usd, args.rate)}, indent=2))
+                print(json.dumps({
+                    "usd": args.usd,
+                    "ltcUsd": args.rate,
+                    "ltc": usd_to_ltc(args.usd, args.rate),
+                }, indent=2))
                 return 0
             if args.sub == "payout":
                 target = args.address or config.ltc_payout_address
                 if not target:
                     raise ValueError("Set LTC_PAYOUT_ADDRESS or pass an address.")
+                if args.ltc <= 0:
+                    raise ValueError("Payout amount must be positive.")
                 if rpc.balance() < args.ltc:
                     raise ValueError("Insufficient LTC balance.")
-                print(json.dumps({"txid": rpc.send(target, args.ltc), "address": target, "amountLtc": args.ltc}, indent=2))
+                print(json.dumps({
+                    "txid": rpc.send(target, args.ltc),
+                    "address": target,
+                    "amountLtc": args.ltc,
+                }, indent=2))
                 return 0
 
         if args.cmd == "run":
@@ -133,6 +148,7 @@ def main():
                     print("DEAD: revenue target was missed.")
                     return 2
                 time.sleep(config.tick_ms / 1000)
+
         parser.print_help()
         return 0
     except KeyboardInterrupt:
@@ -140,6 +156,7 @@ def main():
     except Exception as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
