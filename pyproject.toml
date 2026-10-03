@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "timepressure-agent"
-version = "0.2.0"
+version = "0.3.0"
 description = "An open-source autonomous agent runtime driven by time pressure and verified revenue."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
+dependencies = ["playwright>=1.50,<2"]
 
 [project.scripts]
 timepressure = "timepressure.cli:main"
