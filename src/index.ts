@@ -63,7 +63,14 @@ async function main() {
     await store.addRevenue(state, event);
     state.pressure = recordRevenue(state.pressure, event.cents, now);
     await store.save(state);
-    console.log(`Recorded $${(event.cents / 100).toFixed(2)} from ${source}. Status: ${state.pressure.status}`);
+    if (config.litecoin.autoPayout) {
+      if (!config.litecoin.usdRate) throw new Error('LTC_USD_RATE is required when LTC_AUTO_PAYOUT=true.');
+      const payoutEvent = await payoutEarned(config, state, config.litecoin.usdRate);
+      await store.save(state);
+      console.log(JSON.stringify({ revenue: event, automaticPayout: payoutEvent }, null, 2));
+      return;
+    }
+    console.log(`Recorded ${(event.cents / 100).toFixed(2)} from ${source}. Status: ${state.pressure.status}`);
     return;
   }
 
