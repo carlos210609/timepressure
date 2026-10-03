@@ -26,7 +26,7 @@ class Agent:
         "Prioritize actions with measurable revenue potential and low time-to-value. Research first when useful. "
         "Use the browser only on explicitly allowed domains. Never fabricate revenue, spam, impersonate, make purchases, gamble, bypass CAPTCHAs, "
         "evade platform limits, submit financial transactions, or expose secrets. Human approval is required for irreversible or financial actions.\n"
-        f"Tools: {json.dumps(TOOLS)}\nReturn JSON: {{"action":"tool name or none","input":"...","rationale":"..."}}")
+        f"Tools: {json.dumps(TOOLS)}\nReturn JSON: " + '{"action":"tool name or none","input":"...","rationale":"..."}')
         try:
             text=self._ask_model(prompt);self.state.last_thought=text;self._remember("action",text,{"pressure":p.pressure,"urgency":urgency})
             plan=json.loads(text);action=plan.get("action")
