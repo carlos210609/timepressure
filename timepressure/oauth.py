@@ -20,7 +20,7 @@ class OAuth:
         try:
             import jwt
             key=jwt.PyJWKClient(JWKS).get_signing_key_from_jwt(id_token).key
-            return jwt.decode(id_token,key,algorithms=["RS256"],issuer=ISSUER,audience=client_id,leeway=5,options={"require":["sub","exp","iat"]},verify_signature=True,verify_exp=True)
+            claims=jwt.decode(id_token,key,algorithms=["RS256"],issuer=ISSUER,audience=client_id,leeway=5,options={"require":["sub","exp","iat"]},verify_signature=True,verify_exp=True)\n            if claims.get("nonce") != nonce: raise RuntimeError("OpenAI ID token nonce did not match.")\n            return claims
         except ImportError:raise RuntimeError("OAuth requires PyJWT. Install with: python3 -m pip install 'PyJWT[crypto]'")
         except Exception as e:raise RuntimeError(f"Invalid OpenAI ID token: {e}")
     def _refresh(self,d):
