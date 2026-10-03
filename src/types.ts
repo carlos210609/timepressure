@@ -2,7 +2,8 @@ export type AgentStatus='alive'|'warning'|'critical'|'dead';
 export type EventType='revenue'|'action'|'observation'|'error'|'state';
 export interface RevenueEvent{id:string;cents:number;source:string;reference:string;timestamp:number}
 export interface PressureState{cycleStartedAt:number;targetCents:number;cycleRevenueCents:number;pressure:number;status:AgentStatus;lastRevenueAt?:number;deadline:number}
-export interface PersistedState{version:1;createdAt:number;pressure:PressureState;revenue:RevenueEvent[];memory:MemoryEvent[];working:{goal:string;plan:string[];lastThought?:string}}
+export interface PayoutEvent{id:string;revenueReferences:string[];revenueCents:number;ltcAmount:number;ltcUsdRate:number;address:string;txid:string;timestamp:number}
+export interface PersistedState{version:1;createdAt:number;pressure:PressureState;revenue:RevenueEvent[];payouts:PayoutEvent[];memory:MemoryEvent[];working:{goal:string;plan:string[];lastThought?:string}}
 export interface MemoryEvent{id:string;type:EventType;text:string;timestamp:number;metadata?:Record<string,unknown>}
 export interface AgentConfig{targetCents:number;cycleMs:number;tickMs:number;dataDir:string;model:string;apiKey?:string;baseUrl:string;allowNetwork:boolean;litecoin:{rpcUrl:string;rpcUser?:string;rpcPassword?:string;payoutAddress?:string;minPayoutLtc:number;autoPayout:boolean}}
 export interface ToolContext{now:number;config:AgentConfig}
