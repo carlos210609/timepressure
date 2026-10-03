@@ -1,5 +1,9 @@
 name: CI
-on: [push, pull_request]
+
+on:
+  push:
+  pull_request:
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -8,5 +12,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: python -m compileall timepressure
-      - run: python -m unittest discover -s tests -v
+      - name: Install runtime dependencies
+        run: python -m pip install "PyJWT[crypto]>=2.10,<3" "playwright>=1.50,<2"
+      - name: Compile
+        run: python -m compileall timepressure timepressure.py
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+      - name: Import application
+        run: python -c "import timepressure.cli, timepressure.gui, timepressure.oauth, timepressure.agent"
