@@ -41,7 +41,9 @@ async function exchange(params:URLSearchParams){
 }
 async function verify(idToken:string,clientId:string,nonce:string){
  const jwks=createRemoteJWKSet(new URL(AUTH+'/.well-known/jwks.json'));
- return jwtVerify(idToken,jwks,{issuer:AUTH,audience:clientId,nonce});
+ const result=await jwtVerify(idToken,jwks as any,{issuer:AUTH,audience:clientId});
+ if(result.payload.nonce!==nonce) throw new Error('OAuth ID token nonce mismatch.');
+ return result;
 }
 export async function login(){
  const stored=await load();
