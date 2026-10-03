@@ -14,6 +14,7 @@ def _safe_command(command):
 
 def run_tool(name,input_text,config,state=None,store=None):
     if name=="shell":
+        if not config.shell_enabled: raise ValueError("Shell tool is disabled. Set TIMEPRESSURE_SHELL_ENABLED=true only if you explicitly trust local command execution.")
         _safe_command(input_text); r=subprocess.run(["bash","-lc",input_text],capture_output=True,text=True,timeout=15)
         return (r.stdout if r.returncode==0 else r.stderr or r.stdout)[:20000]
     if name=="read_file": return _safe_path(input_text).read_text()[:30000]
