@@ -65,7 +65,7 @@ def main():
             print(json.dumps({
                 "python": sys.version.split()[0],
                 "dataDir": config.data_dir,
-                "modelConfigured": bool(config.api_key),
+                "modelConfigured": bool(config.api_key),\n                "chatgptOAuth": __import__("timepressure.oauth", fromlist=["OAuth"]).OAuth().connected(),
                 "networkEnabled": config.allow_network,
                 "target": f"USD {config.target_cents/100:.2f}",
                 "cycleMs": config.cycle_ms,
