@@ -1,6 +1,0 @@
-import{execFile}from'node:child_process';import{promisify}from'node:util';import{readFile}from'node:fs/promises';import{assertSafePath,assertSafeShell}from'./policy.js';import type{Tool}from'./types.js';const exec=promisify(execFile);
-export const tools:Tool[]=[
-{name:'shell',description:'Run a safe local command.',async run(input){assertSafeShell(input);try{const r=await exec('bash',['-lc',input],{timeout:15000,maxBuffer:200000});return{ok:true,output:r.stdout.slice(0,20000)}}catch(e){return{ok:false,output:String(e)}}}},
-{name:'read_file',description:'Read a relative text file.',async run(input){assertSafePath(input);try{return{ok:true,output:(await readFile(input,'utf8')).slice(0,30000)}}catch(e){return{ok:false,output:String(e)}}}},
-{name:'fetch_url',description:'Fetch a public HTTP(S) URL when network is enabled.',async run(input,ctx){if(!ctx.config.allowNetwork)return{ok:false,output:'Network disabled.'};try{const u=new URL(input);if(!['http:','https:'].includes(u.protocol))throw new Error('Only HTTP(S) URLs are allowed.');const r=await fetch(u,{signal:AbortSignal.timeout(10000)});return{ok:true,output:(await r.text()).slice(0,30000)}}catch(e){return{ok:false,output:String(e)}}}}
-];
