@@ -96,4 +96,4 @@ class Config:
     target_cents:int; cycle_ms:int; tick_ms:int; data_dir:str; model:str; api_key:str|None
     base_url:str; allow_network:bool; browser_enabled:bool; browser_headless:bool; browser_allowed_domains:list[str]
     ltc_rpc_url:str; ltc_rpc_user:str|None; ltc_rpc_password:str|None; ltc_payout_address:str|None
-    ltc_min_payout:float; ltc_auto_payout:bool; ltc_usd_rate:float|None
+    ltc_min_payout:float; ltc_auto_payout:bool; ltc_usd_rate:float|None; shell_enabled:bool
