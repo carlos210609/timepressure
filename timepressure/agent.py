@@ -2,6 +2,7 @@ import json,time,urllib.request,uuid
 from .models import MemoryEvent
 from .pressure import calculate_pressure
 from .tools import TOOLS,run_tool
+from .triggers import compact,evaluate
 
 class Agent:
     def __init__(self,config,store,state):self.config,self.store,self.state=config,store,state
@@ -13,22 +14,19 @@ class Agent:
         if data.get("output_text"):return data["output_text"]
         return next((part["text"] for item in data.get("output",[]) for part in item.get("content",[]) if part.get("type") in ("output_text","text") and part.get("text")),"")
     def tick(self):
-        self.state.pressure=calculate_pressure(time.time(),self.state.pressure);self.store.save(self.state)
+        now=time.time();self.state.pressure=calculate_pressure(now,self.state.pressure);triggers=evaluate(self.state,now)
+        self.state.working_plan=[f"{x.name}: {x.instruction}" for x in triggers[:5]];self.store.save(self.state)
+        self._remember("trigger"," | ".join(f"{x.name}: {x.reason}" for x in triggers[:5]) or "no active trigger",{"triggers":compact(triggers)})
         if self.state.pressure.status=="dead":return
         if not self.config.api_key:self._remember("observation","No OPENAI_API_KEY configured.");return
-        p=self.state.pressure
-        urgency="LOW"
-        if p.status=="critical":urgency="HIGH"
-        elif p.status=="warning":urgency="MEDIUM"
+        p=self.state.pressure;urgency="HIGH" if p.status=="critical" else ("MEDIUM" if p.status=="warning" else "LOW")
         prompt=(f"You are TimePressure, an autonomous economic agent. Goal: {self.state.working_goal}\n"
-        f"Urgency: {urgency}; pressure={p.pressure:.1f}%; revenue=USD {p.cycle_revenue_cents/100:.2f}; target=USD {p.target_cents/100:.2f}; "
-        f"seconds_left={max(0,int(p.deadline-time.time()))}.\n"
-        "Prioritize actions with measurable revenue potential and low time-to-value. Research first when useful. "
-        "Use the browser only on explicitly allowed domains. Never fabricate revenue, spam, impersonate, make purchases, gamble, bypass CAPTCHAs, "
-        "evade platform limits, submit financial transactions, or expose secrets. Human approval is required for irreversible or financial actions.\n"
+        f"Urgency: {urgency}; pressure={p.pressure:.1f}%; revenue=USD {p.cycle_revenue_cents/100:.2f}; target=USD {p.target_cents/100:.2f}; seconds_left={max(0,int(p.deadline-now))}.\n"
+        f"Active triggers: {json.dumps(compact(triggers),ensure_ascii=False)}\n"
+        "Prioritize measurable revenue potential and low time-to-value. Research first when useful. Never fabricate revenue, spam, impersonate, make purchases, gamble, bypass CAPTCHAs, evade limits, submit financial transactions, or expose secrets. Human approval is required for irreversible or financial actions.\n"
         f"Tools: {json.dumps(TOOLS)}\nReturn JSON: " + '{"action":"tool name or none","input":"...","rationale":"..."}')
         try:
-            text=self._ask_model(prompt);self.state.last_thought=text;self._remember("action",text,{"pressure":p.pressure,"urgency":urgency})
+            text=self._ask_model(prompt);self.state.last_thought=text;self._remember("action",text,{"pressure":p.pressure,"urgency":urgency,"triggers":compact(triggers)})
             plan=json.loads(text);action=plan.get("action")
             if action in TOOLS:
                 out=run_tool(action,str(plan.get("input","")),self.config,self.state,self.store);self._remember("observation",f"{action}: {out}")
