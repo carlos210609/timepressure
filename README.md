@@ -151,3 +151,14 @@ The agent can open pages, inspect their text, click elements and fill ordinary f
 The browser deliberately **does not provide an automatic purchase/payment/financial-submit tool**. It also instructs the agent not to spam, bypass CAPTCHAs, evade platform limits or impersonate people. These restrictions make the agent more useful for research and legitimate workflows without turning it into an uncontrolled browser bot.
 
 The economic loop was also optimized to prioritize low-time-to-value actions when pressure rises. This improves decision-making, but it does not guarantee revenue: real revenue still requires a legitimate monetization source.
+
+
+## Security defaults
+
+The autonomous shell tool is disabled by default. Browser automation requires an explicit HTTPS domain allowlist. Browser state is persisted locally so multi-step workflows can continue across agent actions. Financial and irreversible actions are not automatically submitted by the agent.
+
+For the simplest desktop launch:
+
+    python3 timepressure.py
+
+Connect ChatGPT in the window, then start the AI agent.
