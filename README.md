@@ -2,75 +2,83 @@
 
 **TimePressure** is an open-source autonomous agent runtime whose survival pressure is measured by time instead of capital.
 
-The default rule is simple:
+Default rule:
 
-> **Earn at least US$0.01 during every one-hour cycle, or the agent dies.**
+> **Earn at least USD 0.01 during every one-hour cycle, or the agent dies.**
 
-The project is intentionally conservative: revenue must be recorded as verified/legitimate revenue, secrets stay local, and Litecoin payouts use the operator's own Litecoin Core wallet.
+## Python edition
 
-## Status
+The runtime is now Python-first and its core uses only the Python standard library. **Node.js and npm are no longer required.**
 
-This repository is an MVP runtime. The core pressure engine, CLI, local state, AI inference, Sign in with ChatGPT, safety policy, Litecoin RPC and payout ledger are implemented.
+### Requirements
 
-External prerequisites still apply: an eligible ChatGPT account for ChatGPT-plan OAuth usage, or an OpenAI API key; and a configured Litecoin Core wallet if payouts are desired.
+- Python 3.10+
+- Optional: an OpenAI API key for autonomous AI inference
+- Optional: Litecoin Core RPC for wallet operations
 
-## Install
-
-Requirements: Node.js 20+.
+### Install on Linux
 
 ```bash
 git clone https://github.com/carlos210609/timepressure.git
 cd timepressure
-npm install
-npm run build
-npm link
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+python -m pip install -e .
+timepressure doctor
 ```
 
-## Quick start
-
-Without AI:
+You can also run it without installing the package:
 
 ```bash
-timepressure doctor
+python3 -m timepressure doctor
+```
+
+### Run
+
+```bash
 timepressure status
 timepressure revenue add 0.01 --source test --reference test-001
-```
-
-With an OpenAI API key:
-
-```cp .env.example .env
-# edit .env and set OPENAI_API_KEY
-timepressure run```
-
-With Sign in with ChatGPT:
-
-```bash
-timepressure login
-timepressure login status
 timepressure run
 ```
 
-The OAuth flow opens the system browser and stores credentials under `~/.config/timepressure/` with owner-only permissions. OpenAI's current OSS flow uses PKCE and a loopback callback; eligible users can authorize ChatGPT-plan usage without supplying an API key. citeturn0search7turn0search5
+For AI inference:
+
+```bash
+cp .env.example .env
+export OPENAI_API_KEY="your-key"
+timepressure run
+```
+
+The Python runtime intentionally does not read `.env` automatically, so load environment variables through your shell, a process manager, Docker, or your preferred secrets mechanism.
 
 ## Pressure model
 
-Default environment:
+Default configuration:
 
-```env
+```text
 TIMEPRESSURE_TARGET_CENTS=1
 TIMEPRESSURE_CYCLE_MS=3600000
 TIMEPRESSURE_TICK_MS=10000
 ```
 
-The cycle is reset when recorded revenue reaches the target. Missing the deadline changes the agent to `dead`.
+When recorded revenue reaches the target, the cycle resets. If the deadline passes without reaching the target, the agent becomes `dead`.
+
+Status progression is:
+
+- `alive`: normal
+- `warning`: approximately 20% of the cycle elapsed without reaching the target
+- `critical`: approximately 50% elapsed without reaching the target
+- `dead`: deadline missed
 
 ## Litecoin
 
-TimePressure never stores a wallet seed or private key.
+TimePressure never stores wallet seeds or private keys.
 
-Configure Litecoin Core RPC:
+Configure Litecoin Core:
 
-```env
+```text
 LTC_RPC_URL=http://127.0.0.1:9332/
 LTC_RPC_USER=
 LTC_RPC_PASSWORD=
@@ -84,36 +92,34 @@ Commands:
 
 ```bash
 timepressure wallet balance
-timepressure wallet address timepressure
+timepressure wallet address
 timepressure wallet quote 1 80
 timepressure wallet payout 0.001
-timepressure wallet payout-earned 80
 ```
 
-`wallet payout-earned` converts unpaid recorded revenue using the supplied LTC/USD rate, checks the minimum, sends the payout through Litecoin Core, and records the transaction ID and paid revenue references. It does not fetch a market price.
+The exchange rate is supplied by the operator; the runtime does not pretend to have a live market rate.
 
-Automatic payout is disabled by default. If enabled, `LTC_USD_RATE` is required; after a revenue event is recorded, the runtime settles all currently unpaid revenue to `LTC_PAYOUT_ADDRESS` and records the TXID. The operator remains responsible for the configured exchange rate and wallet.
+## AI and ChatGPT OAuth
 
-## Security model
+The Python migration currently supports `OPENAI_API_KEY` for inference. The previous Node implementation's Sign in with ChatGPT integration is intentionally not copied as an insecure JWT shortcut. A Python OAuth implementation should use a maintained OIDC/JWT library and the current OpenAI OSS Sign in with ChatGPT contract before being enabled.
 
-- No private keys or wallet seeds in environment variables.
-- Local OAuth credentials are stored outside the repository.
-- Shell commands pass through a denylist safety policy.
-- Relative file reads reject traversal and `.env` paths.
+OpenAI's current documentation says open-source clients can use ChatGPT-plan authorization for eligible Responses API requests, with PKCE, a stable host ID, token refresh, and `store:false` plus `stream:true`. See the official documentation before enabling that path.
+
+## Security
+
+This is experimental autonomous-agent software.
+
+- Revenue should come from real, verifiable sources; `revenue add` is a manual accounting command and does not prove that money was earned.
+- Shell execution is restricted by a basic safety policy and should not be considered a production sandbox.
 - Network access can be disabled with `TIMEPRESSURE_ALLOW_NETWORK=false`.
-- Revenue references must be unique.
-- Payouts track paid revenue references to prevent duplicate settlement.
+- Private keys and wallet seeds are never requested.
+- Review actions before unattended operation.
 
-This is an experimental autonomous-agent runtime. Review permissions and generated actions before running it unattended.
-
-## Development
+## Tests
 
 ```bash
-npm run typecheck
-npm test
-npm run build
+python -m unittest discover -s tests -v
+python -m compileall timepressure
 ```
 
-## License
-
-MIT.
+License: MIT.
