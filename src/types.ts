@@ -5,7 +5,7 @@ export interface PressureState{cycleStartedAt:number;targetCents:number;cycleRev
 export interface PayoutEvent{id:string;revenueReferences:string[];revenueCents:number;ltcAmount:number;ltcUsdRate:number;address:string;txid:string;timestamp:number}
 export interface PersistedState{version:1;createdAt:number;pressure:PressureState;revenue:RevenueEvent[];payouts:PayoutEvent[];memory:MemoryEvent[];working:{goal:string;plan:string[];lastThought?:string}}
 export interface MemoryEvent{id:string;type:EventType;text:string;timestamp:number;metadata?:Record<string,unknown>}
-export interface AgentConfig{targetCents:number;cycleMs:number;tickMs:number;dataDir:string;model:string;apiKey?:string;baseUrl:string;allowNetwork:boolean;litecoin:{rpcUrl:string;rpcUser?:string;rpcPassword?:string;payoutAddress?:string;minPayoutLtc:number;autoPayout:boolean}}
+export interface AgentConfig{targetCents:number;cycleMs:number;tickMs:number;dataDir:string;model:string;apiKey?:string;baseUrl:string;allowNetwork:boolean;litecoin:{rpcUrl:string;rpcUser?:string;rpcPassword?:string;payoutAddress?:string;minPayoutLtc:number;autoPayout:boolean;usdRate?:number}}
 export interface ToolContext{now:number;config:AgentConfig}
 export interface ToolResult{ok:boolean;output:string}
 export interface Tool{name:string;description:string;run(input:string,ctx:ToolContext):Promise<ToolResult>}
