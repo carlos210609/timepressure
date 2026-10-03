@@ -123,3 +123,29 @@ python -m compileall timepressure
 ```
 
 License: MIT.
+
+
+## Browser access and revenue optimization
+
+TimePressure can use a real Chromium browser through Playwright to research opportunities and interact with allowed websites.
+
+Install the browser runtime:
+
+```bash
+python -m pip install -e .
+playwright install chromium
+```
+
+Enable only the domains you explicitly trust:
+
+```bash
+export TIMEPRESSURE_BROWSER_ENABLED=true
+export TIMEPRESSURE_BROWSER_HEADLESS=true
+export TIMEPRESSURE_BROWSER_ALLOWED_DOMAINS="example.com,another-site.com"
+```
+
+The agent can open pages, inspect their text, click elements and fill ordinary forms. Browser navigation is HTTPS-only and domain allowlisted.
+
+The browser deliberately **does not provide an automatic purchase/payment/financial-submit tool**. It also instructs the agent not to spam, bypass CAPTCHAs, evade platform limits or impersonate people. These restrictions make the agent more useful for research and legitimate workflows without turning it into an uncontrolled browser bot.
+
+The economic loop was also optimized to prioritize low-time-to-value actions when pressure rises. This improves decision-making, but it does not guarantee revenue: real revenue still requires a legitimate monetization source.
