@@ -43,6 +43,10 @@ def main():
     quote.add_argument("rate", type=float)
 
     args = parser.parse_args()
+    if args.cmd is None:
+        from .gui import launch
+        launch()
+        return 0
 
     try:
         if args.cmd in ("status", "pressure"):
