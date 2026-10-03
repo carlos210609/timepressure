@@ -68,6 +68,9 @@ def main():
                 "litecoinRpc": config.ltc_rpc_url,
                 "payoutAddressConfigured": bool(config.ltc_payout_address),
                 "autoPayout": config.ltc_auto_payout,
+                "browserEnabled": config.browser_enabled,
+                "browserHeadless": config.browser_headless,
+                "browserAllowedDomains": config.browser_allowed_domains,
             }, indent=2))
             return 0
 
