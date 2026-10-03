@@ -77,6 +77,7 @@ LTC_RPC_PASSWORD=
 LTC_PAYOUT_ADDRESS=
 LTC_MIN_PAYOUT=0.001
 LTC_AUTO_PAYOUT=false
+LTC_USD_RATE=
 ```
 
 Commands:
@@ -91,7 +92,7 @@ timepressure wallet payout-earned 80
 
 `wallet payout-earned` converts unpaid recorded revenue using the supplied LTC/USD rate, checks the minimum, sends the payout through Litecoin Core, and records the transaction ID and paid revenue references. It does not fetch a market price.
 
-Automatic payout remains disabled by default. `LTC_AUTO_PAYOUT` is reserved for future automated scheduling and does not itself trigger a payout.
+Automatic payout is disabled by default. If enabled, `LTC_USD_RATE` is required; after a revenue event is recorded, the runtime settles all currently unpaid revenue to `LTC_PAYOUT_ADDRESS` and records the TXID. The operator remains responsible for the configured exchange rate and wallet.
 
 ## Security model
 
