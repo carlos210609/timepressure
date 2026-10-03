@@ -1,64 +1,118 @@
 # TimePressure
 
-**TimePressure** is an open-source autonomous-agent runtime inspired by economic-survival agents, but with a different core mechanic: **time creates pressure**.
+**TimePressure** is an open-source autonomous agent runtime whose survival pressure is measured by time instead of capital.
 
 The default rule is simple:
 
-> The agent has one hour to record at least **$0.01** of verified revenue. If it misses the deadline, the runtime transitions to `dead`.
+> **Earn at least US$0.01 during every one-hour cycle, or the agent dies.**
 
-Revenue is recorded through an explicit ledger interface. The runtime does not fake revenue, silently charge users, or infer revenue from model output.
+The project is intentionally conservative: revenue must be recorded as verified/legitimate revenue, secrets stay local, and Litecoin payouts use the operator's own Litecoin Core wallet.
 
-## Architecture
+## Status
 
-- **Agent loop** — observe → plan → act → learn.
-- **Pressure engine** — converts elapsed time into survival pressure.
-- **Revenue ledger** — explicit revenue events with idempotency references.
-- **Persistent state** — JSON state plus bounded memory events.
-- **Tool registry** — local shell, file and HTTP tools.
-- **Policy engine** — blocks selected dangerous commands and unsafe paths.
-- **CLI** — `run`, `status`, `pressure`, `revenue`, `wallet`, `doctor`.
+This repository is an MVP runtime. The core pressure engine, CLI, local state, AI inference, Sign in with ChatGPT, safety policy, Litecoin RPC and payout ledger are implemented.
+
+External prerequisites still apply: an eligible ChatGPT account for ChatGPT-plan OAuth usage, or an OpenAI API key; and a configured Litecoin Core wallet if payouts are desired.
+
+## Install
+
+Requirements: Node.js 20+.
+
+```bash
+git clone https://github.com/carlos210609/timepressure.git
+cd timepressure
+npm install
+npm run build
+npm link
+```
 
 ## Quick start
 
-```bash
-npm install
-cp .env.example .env
-npm run build
-node dist/index.js status
-node dist/index.js run
-```
-
-For model-backed operation, configure `OPENAI_API_KEY`. Without it, the runtime remains in deterministic demo mode.
-
-## Revenue
-
-For testing:
+Without AI:
 
 ```bash
-node dist/index.js revenue add 0.01 --source demo --reference demo-001
+timepressure doctor
+timepressure status
+timepressure revenue add 0.01 --source test --reference test-001
 ```
 
-The same reference cannot be recorded twice.
+With an OpenAI API key:
+
+```cp .env.example .env
+# edit .env and set OPENAI_API_KEY
+timepressure run```
+
+With Sign in with ChatGPT:
+
+```bash
+timepressure login
+timepressure login status
+timepressure run
+```
+
+The OAuth flow opens the system browser and stores credentials under `~/.config/timepressure/` with owner-only permissions. OpenAI's current OSS flow uses PKCE and a loopback callback; eligible users can authorize ChatGPT-plan usage without supplying an API key. citeturn0search7turn0search5
+
+## Pressure model
+
+Default environment:
+
+```env
+TIMEPRESSURE_TARGET_CENTS=1
+TIMEPRESSURE_CYCLE_MS=3600000
+TIMEPRESSURE_TICK_MS=10000
+```
+
+The cycle is reset when recorded revenue reaches the target. Missing the deadline changes the agent to `dead`.
 
 ## Litecoin
 
-TimePressure can connect to a local Litecoin Core wallet through JSON-RPC. It does **not** store private keys; signing remains inside Litecoin Core.
+TimePressure never stores a wallet seed or private key.
 
-```bash
-node dist/index.js wallet balance
-node dist/index.js wallet address
-node dist/index.js wallet quote 1 80
-node dist/index.js wallet payout 0.001
+Configure Litecoin Core RPC:
+
+```env
+LTC_RPC_URL=http://127.0.0.1:9332/
+LTC_RPC_USER=
+LTC_RPC_PASSWORD=
+LTC_PAYOUT_ADDRESS=
+LTC_MIN_PAYOUT=0.001
+LTC_AUTO_PAYOUT=false
 ```
 
-`wallet quote` uses a user-supplied LTC/USD rate. `wallet payout` sends real LTC. Keep `LTC_AUTO_PAYOUT=false`; automatic payout is not implemented in this version.
+Commands:
 
-Never commit RPC passwords, wallet backups, seed phrases, or private keys.
+```bash
+timepressure wallet balance
+timepressure wallet address timepressure
+timepressure wallet quote 1 80
+timepressure wallet payout 0.001
+timepressure wallet payout-earned 80
+```
 
-## Safety
+`wallet payout-earned` converts unpaid recorded revenue using the supplied LTC/USD rate, checks the minimum, sends the payout through Litecoin Core, and records the transaction ID and paid revenue references. It does not fetch a market price.
 
-This is an experimental autonomous-agent runtime. Do not give it unrestricted credentials, payment keys, production access, or access to systems you do not control.
+Automatic payout remains disabled by default. `LTC_AUTO_PAYOUT` is reserved for future automated scheduling and does not itself trigger a payout.
+
+## Security model
+
+- No private keys or wallet seeds in environment variables.
+- Local OAuth credentials are stored outside the repository.
+- Shell commands pass through a denylist safety policy.
+- Relative file reads reject traversal and `.env` paths.
+- Network access can be disabled with `TIMEPRESSURE_ALLOW_NETWORK=false`.
+- Revenue references must be unique.
+- Payouts track paid revenue references to prevent duplicate settlement.
+
+This is an experimental autonomous-agent runtime. Review permissions and generated actions before running it unattended.
+
+## Development
+
+```bash
+npm run typecheck
+npm test
+npm run build
+```
 
 ## License
 
-MIT
+MIT.
