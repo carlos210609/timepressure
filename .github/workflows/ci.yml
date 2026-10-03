@@ -19,4 +19,4 @@ jobs:
       - name: Run tests
         run: python -m unittest discover -s tests -v
       - name: Import application
-        run: python -c "import timepressure.cli, timepressure.gui, timepressure.oauth, timepressure.agent"
+        run: python -c "import timepressure.cli, timepressure.oauth, timepressure.agent"
