@@ -32,6 +32,8 @@ class Agent:
             "store": False,
         }).encode()
         base = self.config.base_url.rstrip("/")
+        if not base.endswith("/v1"):
+            base += "/v1"
         req = urllib.request.Request(
             base + "/responses",
             payload,
