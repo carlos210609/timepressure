@@ -2,10 +2,11 @@
 """
 TimePressure zero-setup launcher.
 
-After cloning the repository, run:
+After cloning:
+    cd timepressure
     python3 timepressure.py
 
-It installs the Python dependencies and Playwright Chromium on first run.
+The first run installs the Python dependencies and Playwright Chromium.
 No virtual environment, Node.js or npm is required.
 """
 from __future__ import annotations
@@ -15,7 +16,7 @@ import os
 import platform
 import subprocess
 import sys
-
+from pathlib import Path
 
 REQUIREMENTS = [
     "PyJWT[crypto]>=2.10,<3",
@@ -34,20 +35,19 @@ def _pip_install() -> None:
         missing.append(REQUIREMENTS[0])
     if importlib.util.find_spec("playwright") is None:
         missing.append(REQUIREMENTS[1])
-
     if not missing:
         return
 
-    print("[TimePressure] Instalando dependências automaticamente...", flush=True)
-    base = [sys.executable, "-m", "pip", "install", *missing]
+    print("[TimePressure] Installing Python dependencies...", flush=True)
     try:
-        _run(base)
+        _run([sys.executable, "-m", "pip", "install", "--user", *missing])
     except subprocess.CalledProcessError:
-        # Useful on Linux distributions with a system-managed Python.
-        if platform.system() == "Linux":
-            _run([sys.executable, "-m", "pip", "install", "--user", *missing])
-        else:
-            raise
+        # Some managed Linux installations reject user installs. The user
+        # explicitly chose a no-venv setup, so offer the system-pip fallback.
+        _run([
+            sys.executable, "-m", "pip", "install",
+            "--break-system-packages", *missing,
+        ])
 
 
 def _ensure_tkinter() -> None:
@@ -55,25 +55,23 @@ def _ensure_tkinter() -> None:
         return
 
     if platform.system() == "Linux":
-        print("[TimePressure] Tkinter não encontrado. Tentando instalar python3-tk...", flush=True)
-        sudo = "sudo" if os.geteuid() != 0 else ""
-        cmd = ([sudo] if sudo else []) + ["apt-get", "update"]
+        print("[TimePressure] Tkinter is missing; attempting python3-tk...", flush=True)
+        prefix = [] if os.geteuid() == 0 else ["sudo"]
         try:
-            _run(cmd)
-            cmd = ([sudo] if sudo else []) + ["apt-get", "install", "-y", "python3-tk"]
-            _run(cmd)
-        except (subprocess.CalledProcessError, FileNotFoundError):
+            _run(prefix + ["apt-get", "update"])
+            _run(prefix + ["apt-get", "install", "-y", "python3-tk"])
+        except (subprocess.CalledProcessError, FileNotFoundError) as exc:
             raise SystemExit(
-                "Tkinter não pôde ser instalado automaticamente. "
-                "Em Debian/Ubuntu/Mint, execute: sudo apt install python3-tk"
-            )
+                "Could not install Tkinter automatically. On Debian/Ubuntu/Mint run: "
+                "sudo apt install python3-tk"
+            ) from exc
         if importlib.util.find_spec("tkinter") is None:
-            raise SystemExit("Tkinter continua indisponível após a instalação.")
+            raise SystemExit("Tkinter is still unavailable after installation.")
         return
 
     raise SystemExit(
-        "Tkinter não está disponível neste Python. Instale o suporte Tk da sua distribuição "
-        "e execute novamente."
+        "Tkinter is not available in this Python installation. "
+        "Install the platform's Tk support and run again."
     )
 
 
@@ -81,16 +79,21 @@ def _ensure_chromium() -> None:
     if importlib.util.find_spec("playwright") is None:
         return
 
-    marker = os.path.join(os.path.expanduser("~"), ".cache", "ms-playwright")
-    # Avoid downloading Chromium on every launch. Playwright itself decides whether
-    # a browser executable is available; this command is cheap when already installed.
+    marker = Path(os.getenv("TIMEPRESSURE_DATA_DIR", ".data")) / ".chromium-ready"
+    if marker.exists():
+        return
+
+    print("[TimePressure] Installing Playwright Chromium (first run)...", flush=True)
     try:
         _run([sys.executable, "-m", "playwright", "install", "chromium"])
     except subprocess.CalledProcessError as exc:
         raise SystemExit(
-            "Não foi possível instalar o Chromium do Playwright automaticamente. "
-            "Verifique sua conexão com a internet e execute novamente."
+            "Could not install Playwright Chromium automatically. "
+            "Check your internet connection and run again."
         ) from exc
+
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text("installed\n")
 
 
 def bootstrap() -> None:
