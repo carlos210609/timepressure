@@ -3,7 +3,7 @@ import { Store } from './store.js';
 import { Agent } from './agent.js';
 import { calculatePressure, recordRevenue, resetCycle } from './pressure.js';
 import crypto from 'node:crypto';
-import { wallet, payout, usdToLtc } from './wallet.js';
+import { wallet, payout, payoutEarned, usdToLtc } from './wallet.js';
 
 const config = loadConfig();
 const store = new Store(config.dataDir);
@@ -78,7 +78,7 @@ async function main() {
     console.log(await wallet(config).getNewAddress(amount || 'timepressure'));
     return;
   }
-  if (cmd === 'wallet' && sub === 'payout') {
+  if (cmd === 'wallet' && sub === 'payout-earned') {\n    const rate = Number(amount);\n    if (!Number.isFinite(rate) || rate <= 0) throw new Error('Usage: wallet payout-earned <LTC/USD>');\n    const event = await payoutEarned(config, state, rate);\n    await store.save(state);\n    console.log(JSON.stringify(event, null, 2));\n    return;\n  }\n  if (cmd === 'wallet' && sub === 'payout') {
     const ltc = Number(amount);
     console.log(JSON.stringify(await payout(config, ltc, rest[0]), null, 2));
     return;
