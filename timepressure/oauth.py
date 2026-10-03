@@ -44,6 +44,11 @@ class OAuth:
         except OSError:
             pass
 
+    def logout(self):
+        d = self._load()
+        host_id = d.get("ext_agent_host_id", self.host_id)
+        self._save({"ext_agent_host_id": host_id})
+
     def _verify(self, id_token, client_id, nonce):
         try:
             import jwt
@@ -61,9 +66,7 @@ class OAuth:
                 raise RuntimeError("OpenAI ID token nonce did not match.")
             return claims
         except ImportError as exc:
-            raise RuntimeError(
-                "OAuth requires PyJWT. The launcher should install it automatically."
-            ) from exc
+            raise RuntimeError("OAuth requires PyJWT. The launcher should install it automatically.") from exc
         except Exception as exc:
             raise RuntimeError(f"Invalid OpenAI ID token: {exc}") from exc
 
@@ -204,5 +207,4 @@ class OAuth:
         return d
 
     def connected(self):
-        d = self._load()
-        return bool(d.get("access_token"))
+        return bool(self._load().get("access_token"))
