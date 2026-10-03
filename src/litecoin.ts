@@ -1,4 +1,4 @@
-export interface LitecoinWalletConfig{rpcUrl:string;rpcUser?:string;rpcPassword?:string;payoutAddress?:string;minPayoutLtc:number;autoPayout:boolean}
+export interface LitecoinWalletConfig{rpcUrl:string;rpcUser?:string;rpcPassword?:string;payoutAddress?:string;minPayoutLtc:number;autoPayout:boolean;usdRate?:number}
 export class LitecoinRpc{
  constructor(private readonly config:LitecoinWalletConfig){}
  private async call<T>(method:string,params:unknown[]=[]):Promise<T>{
