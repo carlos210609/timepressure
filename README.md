@@ -8,6 +8,8 @@ Default rule:
 
 ## Python edition
 
+The desktop interface uses Tkinter and the AI provider is OpenAI/ChatGPT. The preferred authentication is Sign in with ChatGPT OAuth; an API key remains an optional fallback.
+
 The runtime is now Python-first and its core uses only the Python standard library. **Node.js and npm are no longer required.**
 
 ### Requirements
