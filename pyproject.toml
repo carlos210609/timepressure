@@ -9,7 +9,7 @@ description = "An open-source autonomous agent runtime driven by time pressure a
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
-dependencies = ["playwright>=1.50,<2"]
+dependencies = ["playwright>=1.50,<2", "PyJWT[crypto]>=2.10,<3"]
 
 [project.scripts]
 timepressure = "timepressure.cli:main"
