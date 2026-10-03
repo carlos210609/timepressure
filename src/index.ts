@@ -82,7 +82,15 @@ async function main() {
     console.log(await wallet(config).getNewAddress(amount || 'timepressure'));
     return;
   }
-  if (cmd === 'wallet' && sub === 'payout-earned') {\n    const rate = Number(amount);\n    if (!Number.isFinite(rate) || rate <= 0) throw new Error('Usage: wallet payout-earned <LTC/USD>');\n    const event = await payoutEarned(config, state, rate);\n    await store.save(state);\n    console.log(JSON.stringify(event, null, 2));\n    return;\n  }\n  if (cmd === 'wallet' && sub === 'payout') {
+  if (cmd === 'wallet' && sub === 'payout-earned') {
+    const rate = Number(amount);
+    if (!Number.isFinite(rate) || rate <= 0) throw new Error('Usage: wallet payout-earned <LTC/USD>');
+    const event = await payoutEarned(config, state, rate);
+    await store.save(state);
+    console.log(JSON.stringify(event, null, 2));
+    return;
+  }
+  if (cmd === 'wallet' && sub === 'payout') {
     const ltc = Number(amount);
     console.log(JSON.stringify(await payout(config, ltc, rest[0]), null, 2));
     return;
