@@ -15,5 +15,5 @@ def load_config():
         os.getenv("TIMEPRESSURE_BROWSER_HEADLESS","true").lower()=="true",domains,
         os.getenv("LTC_RPC_URL","http://127.0.0.1:9332/"),os.getenv("LTC_RPC_USER") or None,os.getenv("LTC_RPC_PASSWORD") or None,
         os.getenv("LTC_PAYOUT_ADDRESS") or None,_num("LTC_MIN_PAYOUT",0.001),
-        os.getenv("LTC_AUTO_PAYOUT","false").lower()=="true",(_num("LTC_USD_RATE",0) or None)
+        os.getenv("LTC_AUTO_PAYOUT","false").lower()=="true",(_num("LTC_USD_RATE",0) or None),os.getenv("TIMEPRESSURE_SHELL_ENABLED","false").lower()=="true"
     )
