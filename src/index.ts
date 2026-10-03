@@ -117,7 +117,8 @@ async function main() {
       cycleMs: config.cycleMs,
       litecoinRpcConfigured: Boolean(config.litecoin.rpcUrl && config.litecoin.rpcUser && config.litecoin.rpcPassword),
       payoutAddressConfigured: Boolean(config.litecoin.payoutAddress),
-      autoPayout: config.litecoin.autoPayout
+      autoPayout: config.litecoin.autoPayout,
+      ltcUsdRateConfigured: Boolean(config.litecoin.usdRate)
     }, null, 2));
     return;
   }
