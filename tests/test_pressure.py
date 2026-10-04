@@ -22,5 +22,12 @@ class PressureTests(unittest.TestCase):
         self.assertEqual(new.cycle_started_at, 500)
         self.assertEqual(new.cycle_revenue_cents, 0)
 
+    def test_revenue_after_deadline_is_rejected(self):
+        state = PressureState(0, 1, 0, 0, "alive", 1000)
+        current = calculate_pressure(1000, state)
+        self.assertEqual(current.status, "dead")
+        with self.assertRaises(ValueError):
+            record_revenue(current, 1, 1000)
+
 if __name__ == "__main__":
     unittest.main()
