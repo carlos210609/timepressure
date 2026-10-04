@@ -43,7 +43,7 @@ class Agent:
             data = json.loads(response.read())
         if data.get("output_text"):
             return data["output_text"]
-        return next(
+        text = next(
             (
                 part["text"]
                 for item in data.get("output", [])
@@ -52,6 +52,9 @@ class Agent:
             ),
             "",
         )
+        if not text:
+            raise RuntimeError("Model response did not contain output text.")
+        return text
 
     def tick(self):
         now = time.time()
