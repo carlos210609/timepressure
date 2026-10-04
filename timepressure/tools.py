@@ -40,21 +40,30 @@ def _assert_public_host(host):
             raise ValueError(f"Network access to non-public address is blocked: {address}")
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 def _fetch_https(url, max_redirects=5):
     current = url
+    opener = urllib.request.build_opener(_NoRedirect)
     for _ in range(max_redirects + 1):
         parsed = urllib.parse.urlparse(current)
         if parsed.scheme != "https":
             raise ValueError("Only HTTPS URLs are allowed.")
         _assert_public_host(parsed.hostname)
         request = urllib.request.Request(current, headers={"User-Agent": "TimePressure/0.4"})
-        opener = urllib.request.build_opener(urllib.request.HTTPRedirectHandler())
-        with opener.open(request, timeout=10) as response:
-            final = response.geturl()
-            if final != current:
-                current = final
-                continue
-            return response.read(30000).decode(errors="replace")
+        try:
+            with opener.open(request, timeout=10) as response:
+                return response.read(30000).decode(errors="replace")
+        except urllib.error.HTTPError as exc:
+            if exc.code not in {301, 302, 303, 307, 308}:
+                raise
+            location = exc.headers.get("Location")
+            if not location:
+                raise ValueError("Redirect response did not provide a location.")
+            current = urllib.parse.urljoin(current, location)
     raise ValueError("Too many redirects.")
 
 
