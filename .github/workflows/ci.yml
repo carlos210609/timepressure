@@ -42,7 +42,10 @@ jobs:
               browser = Browser(config, state, store)
               try:
                   result = browser.open("https://example.com")
-                  assert "Example Domain" in result["text"]
+                  assert result["url"].startswith("https://example.com")
+                  browser.page.set_content("<h1>TimePressure Browser OK</h1>")
+                  snapshot = browser._snapshot()
+                  assert "TimePressure Browser OK" in snapshot["text"]
               finally:
                   browser.close()
           PY
