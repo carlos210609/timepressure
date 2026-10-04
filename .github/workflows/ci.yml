@@ -20,6 +20,28 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Import application
         run: python -c "import timepressure.cli, timepressure.oauth, timepressure.agent"
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Browser smoke test
+        run: |
+          TIMEPRESSURE_BROWSER_HEADLESS=true python - <<'PY'
+          import tempfile
+          from timepressure.browser import Browser
+          from timepressure.models import PressureState, State
+          from timepressure.store import Store
+          from timepressure.config import Config
+
+          with tempfile.TemporaryDirectory() as tmp:
+              config = Config(1, 3600000, 10000, tmp, "gpt-5.6", None, "https://api.openai.com/v1", True, True, True, ["example.com"], "http://127.0.0.1:9332/", None, None, None, 0.001, False, None, False)
+              store = Store(tmp)
+              state = store.init(1, 3600000)
+              browser = Browser(config, state, store)
+              try:
+                  result = browser.open("https://example.com")
+                  assert "Example Domain" in result["text"]
+              finally:
+                  browser.close()
+          PY
       - name: CLI smoke test
         run: |
           TIMEPRESSURE_DATA_DIR="$RUNNER_TEMP/timepressure-data" python timepressure.py --version
