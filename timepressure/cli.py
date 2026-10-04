@@ -190,9 +190,11 @@ def main(argv=None):
             reference = args.reference or str(uuid.uuid4())
             if any(item.reference == reference for item in state.revenue):
                 raise ValueError("Duplicate revenue reference.")
-            event = RevenueEvent(str(uuid.uuid4()), cents, args.source, reference, time.time())
+            timestamp = time.time()
+            state.pressure = calculate_pressure(timestamp, state.pressure)
+            event = RevenueEvent(str(uuid.uuid4()), cents, args.source, reference, timestamp)
+            state.pressure = record_revenue(state.pressure, cents, timestamp)
             store.add_revenue(state, event)
-            state.pressure = record_revenue(state.pressure, cents, event.timestamp)
             store.save(state)
             print(f"✓ Recorded USD {cents / 100:.2f} from {args.source}. Status: {state.pressure.status}")
             return 0
