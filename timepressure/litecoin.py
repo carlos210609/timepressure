@@ -1,7 +1,6 @@
 import base64
 import json
 import urllib.request
-from .models import Config
 
 class LitecoinRPC:
     def __init__(self, config):
