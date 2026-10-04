@@ -4,7 +4,7 @@ import tempfile
 import time
 from pathlib import Path
 
-from .models import MemoryEvent, PressureState, RevenueEvent, State
+from .models import PressureState, State
 
 
 class Store:
