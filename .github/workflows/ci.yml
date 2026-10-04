@@ -20,3 +20,8 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Import application
         run: python -c "import timepressure.cli, timepressure.oauth, timepressure.agent"
+      - name: CLI smoke test
+        run: |
+          TIMEPRESSURE_DATA_DIR="$RUNNER_TEMP/timepressure-data" python timepressure.py --version
+          TIMEPRESSURE_DATA_DIR="$RUNNER_TEMP/timepressure-data" python -m timepressure status
+          TIMEPRESSURE_DATA_DIR="$RUNNER_TEMP/timepressure-data" python -m timepressure doctor
