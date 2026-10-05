@@ -92,11 +92,6 @@ def build_parser():
     sub.add_parser("hunt", help="Discover public paid opportunities and queue the best ones.")
     sub.add_parser("tasks", help="Show active multitask opportunities and learned strategy stats.")
 
-    auth = sub.add_parser("auth", help="Manage ChatGPT authentication.")
-    auth_sub = auth.add_subparsers(dest="sub", required=True)
-    auth_sub.add_parser("login", help="Open the ChatGPT OAuth login flow.")
-    auth_sub.add_parser("logout", help="Remove the stored ChatGPT access token.")
-    auth_sub.add_parser("status", help="Show ChatGPT authentication status.")
 
     revenue = sub.add_parser("revenue", help="Record verified revenue.")
     revenue_sub = revenue.add_subparsers(dest="sub", required=True)
