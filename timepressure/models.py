@@ -138,13 +138,7 @@ class State:
             float(d.get("createdAt", pressure.cycle_started_at)),
             pressure,
             [
-                RevenueEvent(
-                    x["id"],
-                    int(x["cents"]),
-                    x["source"],
-                    x["reference"],
-                    float(x["timestamp"]),
-                )
+                RevenueEvent(x["id"], int(x["cents"]), x["source"], x["reference"], float(x["timestamp"]))
                 for x in d.get("revenue", [])
             ],
             [
@@ -154,41 +148,26 @@ class State:
                     int(x.get("revenue_cents", x.get("revenueCents", 0))),
                     float(x.get("ltc_amount", x.get("ltcAmount", 0))),
                     float(x.get("ltc_usd_rate", x.get("ltcUsdRate", 0))),
-                    x["address"],
-                    x["txid"],
-                    float(x["timestamp"]),
+                    x["address"], x["txid"], float(x["timestamp"]),
                 )
                 for x in d.get("payouts", [])
             ],
             [
-                MemoryEvent(
-                    x["id"],
-                    x["type"],
-                    x["text"],
-                    float(x["timestamp"]),
-                    x.get("metadata", {}),
-                )
+                MemoryEvent(x["id"], x["type"], x["text"], float(x["timestamp"]), x.get("metadata", {}))
                 for x in d.get("memory", [])
             ],
             [
-                BrowserEvent(
-                    x["id"],
-                    x["action"],
-                    x["url"],
-                    x.get("title", ""),
-                    float(x["timestamp"]),
-                )
+                BrowserEvent(x["id"], x["action"], x["url"], x.get("title", ""), float(x["timestamp"]))
                 for x in d.get("browserHistory", [])
             ],
-            d.get("working", {}).get(
-                "goal", "Generate legitimate value and record verified revenue."
-            ),
-            d.get("working", {}).get("plan", []),
-            d.get("working", {}).get("lastThought"),
             TrafficState(**d["traffic"]) if d.get("traffic") else None,
-            [TrafficEvent(x["id"], int(x["visits"]), x["source"], x["reference"], float(x["timestamp"])) for x in d.get("trafficEvents", [])],
+            [TrafficEvent(x["id"], int(x["visits"]), x["source"], x["reference"], float(x["timestamp"]))
+             for x in d.get("trafficEvents", [])],
             [SocialAccount(**x) for x in d.get("socialAccounts", [])],
             [SocialPost(**x) for x in d.get("socialPosts", [])],
+            d.get("working", {}).get("goal", "Generate legitimate value and record verified revenue."),
+            d.get("working", {}).get("plan", []),
+            d.get("working", {}).get("lastThought"),
         )
 
 
