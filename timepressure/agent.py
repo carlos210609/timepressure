@@ -97,8 +97,9 @@ class Agent:
         if self.state.pressure.status == "dead":
             return
         if not (self.oauth.connected() or self.config.api_key):
-            self._remember("observation", "No ChatGPT connection configured.")
-            return
+            message = "AI connection required: connect ChatGPT or configure OPENAI_API_KEY."
+            self._remember("security_or_runtime_error", message)
+            raise RuntimeError(message)
 
         p = self.state.pressure
         urgency = "HIGH" if p.status == "critical" else ("MEDIUM" if p.status == "warning" else "LOW")
