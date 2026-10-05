@@ -16,6 +16,8 @@ class CLITests(unittest.TestCase):
         for argv in [
             ["run"],
             ["run", "--once"],
+            ["run", "--web"],
+            ["web"],
             ["status"],
             ["status", "--watch"],
             ["doctor"],
