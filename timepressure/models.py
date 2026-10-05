@@ -185,5 +185,6 @@ class Config:
     ltc_usd_rate: float | None
     shell_enabled: bool
     temp_email_enabled: bool
-    temp_email_api_url: str
     temp_email_target_domains: list[str]
+    temp_email_provider_domains: list[str]
+    temp_email_providers: list[dict[str, str]]
