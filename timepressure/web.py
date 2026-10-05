@@ -5,6 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 from .social import social_snapshot
 from .agent import Agent
+from .chat_controls import parse_pressure_command, pressure_status
 
 from .pressure import calculate_pressure
 from .traffic import traffic_snapshot
