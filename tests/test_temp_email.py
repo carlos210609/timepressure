@@ -23,8 +23,8 @@ class TempEmailTests(unittest.TestCase):
         config = SimpleNamespace(
             temp_email_enabled=True,
             temp_email_target_domains=["example.com"],
-            temp_email_provider_domains=["temp-mail.io"],
-            temp_email_providers=[{"name":"temp-mail.io","url":"https://temp-mail.io/en","domain":"temp-mail.io"}],
+            temp_email_provider_domains=["allowed-provider.example"],
+            temp_email_providers=[{"name":"untrusted","url":"https://temp-mail.io/en","domain":"temp-mail.io"}],
         )
         browser = Mock()
         browser.page.url = "https://demo.example.com/signup"
