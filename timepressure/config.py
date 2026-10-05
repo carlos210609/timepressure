@@ -17,7 +17,7 @@ def load_config():
         if x.strip()
     ]
     return Config(
-        int(_num("TIMEPRESSURE_TARGET_CENTS", 1)),
+        int(_num("TIMEPRESSURE_TARGET_CENTS", 10)),
         int(_num("TIMEPRESSURE_CYCLE_MS", 3600000)),
         int(_num("TIMEPRESSURE_TICK_MS", 10000)),
         os.getenv("TIMEPRESSURE_DATA_DIR", ".data"),
