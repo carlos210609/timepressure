@@ -142,7 +142,7 @@ def main(argv=None):
                 return 0
             while True:
                 print("\033[2J\033[H", end="")
-                _print_json(_status_payload(state, oauth))
+                _print_json(_status_payload(state, config))
                 time.sleep(max(0.5, args.interval))
 
         if args.cmd == "doctor":
