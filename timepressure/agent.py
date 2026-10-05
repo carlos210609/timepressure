@@ -11,6 +11,7 @@ from .oauth import OAuth
 from .revenue_playbook import top_strategies
 from .task_engine import TaskPortfolio
 from .opportunity_hunter import discover
+from .audit import AuditLog
 from .security import assert_agent_action
 
 
