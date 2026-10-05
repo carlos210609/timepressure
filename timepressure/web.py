@@ -99,7 +99,7 @@ def _local_ip():
 
 
 def dashboard_payload(state, config):
-    state.pressure = calculate_pressure(time.time(), state.pressure)
+    state.pressure = calculate_pressure(time.time(), state.pressure, config.pressure_multiplier)
     return {
         "version": state.version,
         "status": state.pressure.status,
@@ -110,6 +110,7 @@ def dashboard_payload(state, config):
         "deadline": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(state.pressure.deadline)),
         "chatgpt": False,
         "model": config.model,
+        "pressureMultiplier": config.pressure_multiplier,
         "plan": state.working_plan,
         "lastThought": state.last_thought,
         "revenue": [vars(x) for x in state.revenue[-100:]],
