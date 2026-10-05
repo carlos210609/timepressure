@@ -85,7 +85,7 @@ class TaskPortfolio:
 
     def add_opportunities(self, opportunities, max_active=15):
         self._expire_stale()
-        max_active = min(max(1, int(max_active)), 6)
+        max_active = min(max(1, int(max_active)), 15)
         active = self._active()
         existing = {x.get("externalId") for x in active}
         for item in opportunities:
