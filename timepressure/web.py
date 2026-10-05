@@ -8,6 +8,7 @@ from .agent import Agent
 
 from .pressure import calculate_pressure
 from .traffic import traffic_snapshot
+from .innovation import intelligence_snapshot
 
 
 INDEX = r"""<!doctype html>
@@ -47,6 +48,7 @@ pre{white-space:pre-wrap;word-break:break-word;margin:0;color:#d7dce5;font:12px/
 <div class="card"><div class="head"><h2>Working plan</h2><span class="badge" id="taskcount">0 tasks</span></div><div class="list" id="plan"><div class="empty">No active plan.</div></div></div>
 </div>
 <div class="section2">
+<div class="card"><div class="head"><h2>Intelligence engine</h2><span class="badge">15 functions</span></div><pre id="intel">Loading…</pre></div>
 <div class="card"><div class="head"><h2>Browser activity</h2><span class="badge">latest</span></div><div id="browser" class="browser"><div class="browserbar">No browser activity yet</div><div class="browserbody empty">The agent has not opened a page.</div></div></div>
 <div class="card"><div class="head"><h2>Revenue ledger</h2><span class="badge" id="revcount">0 events</span></div><div class="list" id="ledger"><div class="empty">No verified revenue recorded.</div></div></div>
 </div>
@@ -74,7 +76,7 @@ function render(d){
  const plan=d.plan||[]; $('taskcount').textContent=plan.length+' tasks'; $('plan').innerHTML=plan.length?plan.map((x,i)=>'<div class="item"><b>#'+(i+1)+'</b><small>'+esc(x)+'</small></div>').join(''):'<div class="empty">No active plan.</div>';
  const b=(d.browserHistory||[]).slice(-1)[0]; $('browser').innerHTML=b?'<div class="browserbar">'+esc(b.url)+'</div><div class="browserbody"><span class="pill">'+esc(b.action)+'</span><h3>'+esc(b.title||'Untitled')+'</h3><small>'+new Date(b.timestamp*1000).toLocaleString()+'</small></div>':'<div class="browserbar">No browser activity yet</div><div class="browserbody empty">The agent has not opened a page.</div>';
  const rev=(d.revenue||[]).slice().reverse(); $('revcount').textContent=rev.length+' events'; $('ledger').innerHTML=rev.length?rev.slice(0,8).map(x=>'<div class="item"><b>'+money(x.cents)+'</b><small>'+esc(x.source)+' · '+new Date(x.timestamp*1000).toLocaleString()+'</small></div>').join(''):'<div class="empty">No verified revenue recorded.</div>';
- const ev=(d.memory||[]).slice().reverse(); $('events').innerHTML=ev.length?ev.slice(0,12).map(x=>'<div class="item"><b>'+esc(x.type)+'</b><small>'+esc(x.text)+'</small></div>').join(''):'<div class="empty">Waiting…</div>';
+ const intel=d.intelligence||{}; $('intel').textContent=JSON.stringify(intel,null,2); const ev=(d.memory||[]).slice().reverse(); $('events').innerHTML=ev.length?ev.slice(0,12).map(x=>'<div class="item"><b>'+esc(x.type)+'</b><small>'+esc(x.text)+'</small></div>').join(''):'<div class="empty">Waiting…</div>';
  $('runtime').textContent=JSON.stringify({version:d.version,model:d.model,browserEnabled:d.browserEnabled,browserHeadless:d.browserHeadless,networkEnabled:d.networkEnabled},null,2);
 }
 let chatHistory=[];
@@ -119,6 +121,7 @@ def dashboard_payload(state, config):
         "networkEnabled": config.allow_network,
         "traffic": traffic_snapshot(state),
         "social": social_snapshot(state),
+        "intelligence": intelligence_snapshot(state, config),
     }
 
 
