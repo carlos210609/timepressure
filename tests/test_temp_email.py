@@ -1,7 +1,8 @@
 import unittest
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
-from timepressure.temp_email import is_target_domain_allowed, MailTm
+from timepressure.temp_email import _extract_email, is_target_domain_allowed, prepare_temp_email_for_page
 
 
 class TempEmailTests(unittest.TestCase):
@@ -10,22 +11,28 @@ class TempEmailTests(unittest.TestCase):
         self.assertFalse(is_target_domain_allowed("https://evil-example.com", ["example.com"]))
         self.assertFalse(is_target_domain_allowed("http://example.com", ["example.com"]))
 
-    def test_mailtm_create_flow(self):
-        responses = [
-            {"hydra:member": [{"domain": "example.mail.tm", "isActive": True}]},
-            {"address": "tp123@example.mail.tm"},
-            {"id": "account-id", "token": "secret-token"},
-        ]
-        client = MailTm()
-        with patch.object(client, "_request", side_effect=responses):
-            result = client.create()
-        self.assertTrue(result["address"].startswith("tp"))
-        self.assertTrue(result["address"].endswith("@example.mail.tm"))
-        self.assertEqual(result["token"], "secret-token")
+    def test_extracts_email_from_input_value(self):
+        page = Mock()
+        locator = Mock()
+        locator.count.return_value = 1
+        locator.nth.return_value.input_value.return_value = "tp123@example.test"
+        page.locator.return_value = locator
+        self.assertEqual(_extract_email(page), "tp123@example.test")
 
-    def test_provider_host_is_pinned(self):
-        with self.assertRaises(ValueError):
-            MailTm("https://evil.example")
+    def test_provider_must_be_allowlisted(self):
+        config = SimpleNamespace(
+            temp_email_enabled=True,
+            temp_email_target_domains=["example.com"],
+            temp_email_provider_domains=["temp-mail.io"],
+            temp_email_providers=[{"name":"temp-mail.io","url":"https://temp-mail.io/en","domain":"temp-mail.io"}],
+        )
+        browser = Mock()
+        browser.page.url = "https://demo.example.com/signup"
+        with patch("timepressure.temp_email._open_provider") as open_provider:
+            open_provider.return_value = (Mock(), config.temp_email_providers[0], "tp@example.test")
+            with self.assertRaises(Exception):
+                prepare_temp_email_for_page(browser, config)
+            open_provider.assert_not_called()
 
 
 if __name__ == "__main__":
