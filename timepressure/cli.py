@@ -256,14 +256,14 @@ def main(argv=None):
 
         if args.cmd == "web":
             from .web import serve
-            serve(config, store, state, host=args.host or "127.0.0.1", port=args.port)
+            serve(config, store, state, host=args.host, port=args.port)
             return 0
 
         if args.cmd == "run":
             if args.web:
                 from .web import serve
                 import threading
-                web_host = os.getenv("TIMEPRESSURE_WEB_HOST", "127.0.0.1")
+                web_host = os.getenv("TIMEPRESSURE_WEB_HOST")
                 web_port = int(os.getenv("TIMEPRESSURE_WEB_PORT", "8787"))
                 threading.Thread(
                     target=serve,
