@@ -71,8 +71,10 @@ class TaskPortfolio:
         active = self._active()
         existing = {x.get("externalId") for x in active}
         for item in opportunities:
-            if len(active) >= max_active or item["id"] in existing:
+            if len(active) >= max_active:
                 break
+            if item["id"] in existing:
+                continue
             task = {
                 "id": f"opp-{int(time.time()*1000)}-{len(self.tasks)}",
                 "externalId": item["id"],
