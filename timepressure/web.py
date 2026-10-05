@@ -149,6 +149,13 @@ def serve(config, store, state, host=None, port=8787):
                 try:
                     body = json.loads(self.rfile.read(length) or b"{}")
                     message = str(body.get("message", "")).strip()
+                    pressure_command = parse_pressure_command(message, config.pressure_multiplier)
+                    if pressure_command is not None:
+                        config.pressure_multiplier = pressure_command
+                        self._send(200, "application/json; charset=utf-8", json.dumps({
+                            "reply": f"Feito. {pressure_status(config.pressure_multiplier)}"
+                        }, ensure_ascii=False))
+                        return
                     history = body.get("history", [])
                     if not message or len(message) > 4000:
                         raise ValueError("Message must contain 1-4000 characters.")
