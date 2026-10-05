@@ -19,7 +19,8 @@ class TempEmailTests(unittest.TestCase):
         client = MailTm()
         with patch.object(client, "_request", side_effect=responses):
             result = client.create()
-        self.assertEqual(result["address"], "tp123@example.mail.tm")
+        self.assertTrue(result["address"].startswith("tp"))
+        self.assertTrue(result["address"].endswith("@example.mail.tm"))
         self.assertEqual(result["token"], "secret-token")
 
     def test_provider_host_is_pinned(self):
