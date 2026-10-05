@@ -15,6 +15,7 @@ from .opportunity_hunter import discover
 from .task_engine import TaskPortfolio
 from .security import security_snapshot
 from .traffic import campaign_url, record_visit, start_campaign, traffic_snapshot
+from .social import approve_post, mark_published, queue_post, record_metrics, register_account, social_snapshot
 
 
 def _status_payload(state, config):
@@ -31,6 +32,7 @@ def _status_payload(state, config):
         "nvidia": bool(config.nvidia_api_key),
         "lastThought": state.last_thought,
         "traffic": traffic_snapshot(state),
+        "social": social_snapshot(state),
     }
 
 
@@ -110,8 +112,31 @@ def build_parser():
     traffic_record.add_argument("visits", type=int, default=1, nargs="?")
     traffic_record.add_argument("--reference")
 
+    social = sub.add_parser("social", help="Manage legitimate social traffic campaigns.")
+    social_sub = social.add_subparsers(dest="sub", required=True)
+    sa = social_sub.add_parser("account", help="Register an owned/authorized social account.")
+    sa.add_argument("platform", choices=["x", "facebook", "instagram", "reddit", "tiktok", "youtube"])
+    sa.add_argument("handle")
+    sa.add_argument("account_ref", help="Provider account/page identifier or connection reference.")
+    sa.add_argument("--connected", action="store_true")
+    social_sub.add_parser("status", help="Show social campaign status.")
+    sp = social_sub.add_parser("queue", help="Queue a post for an authorized account.")
+    sp.add_argument("account_id")
+    sp.add_argument("text")
+    sp.add_argument("url")
+    sp.add_argument("--campaign", default="timepressure")
+    sap = social_sub.add_parser("approve", help="Approve a draft before publishing.")
+    sap.add_argument("post_id")
+    spp = social_sub.add_parser("published", help="Mark a provider-confirmed publication.")
+    spp.add_argument("post_id")
+    spp.add_argument("--external-id")
+    sm = social_sub.add_parser("metrics", help="Record provider analytics.")
+    sm.add_argument("post_id")
+    sm.add_argument("--clicks", type=int, default=0)
+    sm.add_argument("--visits", type=int, default=0)
 
-    revenue = sub.add_parser("revenue", help="Record verified revenue.")
+
+    revenue = sub.add_parser("revenue", sub.add_parser("revenue", help="Record verified revenue.")
     revenue_sub = revenue.add_subparsers(dest="sub", required=True)
     add = revenue_sub.add_parser("add", help="Add a revenue event to the local ledger.")
     add.add_argument("usd", type=float)
@@ -222,6 +247,23 @@ def main(argv=None):
                 store.save(state)
                 _print_json({"recorded": vars(event), "campaign": traffic_snapshot(state)})
                 return 0
+
+        if args.cmd == "social":
+            if args.sub == "account":
+                account = register_account(state, args.platform, args.handle, args.account_ref, args.connected)
+            elif args.sub == "status":
+                _print_json(social_snapshot(state)); return 0
+            elif args.sub == "queue":
+                post = queue_post(state, args.account_id, args.text, args.url, args.campaign)
+            elif args.sub == "approve":
+                post = approve_post(state, args.post_id)
+            elif args.sub == "published":
+                post = mark_published(state, args.post_id, args.external_id)
+            elif args.sub == "metrics":
+                post = record_metrics(state, args.post_id, args.clicks, args.visits)
+            store.save(state)
+            _print_json(vars(account if args.sub == "account" else post) if args.sub != "status" else social_snapshot(state))
+            return 0
 
         if args.cmd == "reset":
             state.pressure = reset_cycle(state.pressure, time.time(), config.cycle_ms)
