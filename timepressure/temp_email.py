@@ -7,11 +7,9 @@ from __future__ import annotations
 
 import json
 import secrets
-import string
 import time
 import urllib.error
 import urllib.request
-import uuid
 
 from .security import assert_https_public_url
 
