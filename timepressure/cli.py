@@ -98,6 +98,7 @@ def build_parser():
     add.add_argument("usd", type=float)
     add.add_argument("--source", default="manual")
     add.add_argument("--reference")
+    add.add_argument("--strategy", help="Strategy id to update the learning statistics.")
 
     wallet = sub.add_parser("wallet", help="Manage Litecoin Core RPC operations.")
     wallet_sub = wallet.add_subparsers(dest="sub", required=True)
@@ -211,6 +212,8 @@ def main(argv=None):
             event = RevenueEvent(str(uuid.uuid4()), cents, args.source, reference, timestamp)
             state.pressure = record_revenue(state.pressure, cents, timestamp)
             store.add_revenue(state, event)
+            if args.strategy:
+                TaskPortfolio(config.data_dir).record_revenue(args.strategy, args.usd)
             store.save(state)
             print(f"✓ Recorded USD {cents / 100:.2f} from {args.source}. Status: {state.pressure.status}")
             return 0
