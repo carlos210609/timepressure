@@ -31,7 +31,7 @@ def load_config():
         os.getenv("TIMEPRESSURE_ALLOW_NETWORK", "true").lower() != "false",
         os.getenv("TIMEPRESSURE_BROWSER_ENABLED", "true").lower() == "true",
         os.getenv("TIMEPRESSURE_BROWSER_HEADLESS", "true").lower() == "true",
-        domains,
+        domains + (["temp-mail.io"] if os.getenv("TIMEPRESSURE_TEMP_EMAIL_ENABLED", "false").lower() == "true" else []),
         os.getenv("LTC_RPC_URL", "http://127.0.0.1:9332/"),
         os.getenv("LTC_RPC_USER") or None,
         os.getenv("LTC_RPC_PASSWORD") or None,
@@ -41,6 +41,7 @@ def load_config():
         (_num("LTC_USD_RATE", 0) or None),
         os.getenv("TIMEPRESSURE_SHELL_ENABLED", "false").lower() == "true",
         os.getenv("TIMEPRESSURE_TEMP_EMAIL_ENABLED", "false").lower() == "true",
-        os.getenv("TIMEPRESSURE_TEMP_EMAIL_API_URL", "https://api.mail.tm"),
         [x.strip().lower() for x in os.getenv("TIMEPRESSURE_TEMP_EMAIL_TARGET_DOMAINS", "").split(",") if x.strip()],
+        ["temp-mail.io"],
+        [{"name": "temp-mail.io", "url": "https://temp-mail.io/en", "domain": "temp-mail.io"}],
     )
