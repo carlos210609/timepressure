@@ -14,6 +14,7 @@ from .store import Store
 from .opportunity_hunter import discover
 from .task_engine import TaskPortfolio
 from .security import security_snapshot
+from .traffic import campaign_url, record_visit, start_campaign, traffic_snapshot
 
 
 def _status_payload(state, config):
@@ -92,6 +93,22 @@ def build_parser():
     sub.add_parser("hunt", help="Discover public paid opportunities and queue the best ones.")
     sub.add_parser("tasks", help="Show active multitask opportunities and learned strategy stats.")
 
+    traffic = sub.add_parser("traffic", help="Run a legitimate website traffic campaign.")
+    traffic_sub = traffic.add_subparsers(dest="sub", required=True)
+    traffic_start = traffic_sub.add_parser("start", help="Start a traffic campaign.")
+    traffic_start.add_argument("url")
+    traffic_start.add_argument("target", type=int, help="Target number of verified visits.")
+    traffic_start.add_argument("--campaign", default="timepressure")
+    traffic_status = traffic_sub.add_parser("status", help="Show traffic campaign status.")
+    traffic_link = traffic_sub.add_parser("link", help="Create a tracked UTM campaign URL.")
+    traffic_link.add_argument("source")
+    traffic_link.add_argument("--medium", default="traffic")
+    traffic_link.add_argument("--campaign", default=None)
+    traffic_record = traffic_sub.add_parser("record", help="Record externally verified visits.")
+    traffic_record.add_argument("source")
+    traffic_record.add_argument("visits", type=int, default=1, nargs="?")
+    traffic_record.add_argument("--reference")
+
 
     revenue = sub.add_parser("revenue", help="Record verified revenue.")
     revenue_sub = revenue.add_subparsers(dest="sub", required=True)
@@ -168,6 +185,7 @@ def main(argv=None):
                 "litecoinRpc": config.ltc_rpc_url,
                 "payoutAddressConfigured": bool(config.ltc_payout_address),
                 "security": security_snapshot(config),
+                "traffic": traffic_snapshot(state),
             })
             return 0
 
@@ -183,6 +201,26 @@ def main(argv=None):
             portfolio = TaskPortfolio(config.data_dir)
             _print_json({"active": portfolio.snapshot(), "strategyStats": portfolio.stats_snapshot()})
             return 0
+
+        if args.cmd == "traffic":
+            if args.sub == "start":
+                campaign = start_campaign(state, args.url, args.target, args.campaign)
+                store.save(state)
+                _print_json({"started": True, **traffic_snapshot(state)})
+                return 0
+            if args.sub == "status":
+                _print_json(traffic_snapshot(state))
+                return 0
+            if args.sub == "link":
+                if not state.traffic:
+                    raise ValueError("Start a traffic campaign first.")
+                print(campaign_url(state.traffic.target_url, args.source, args.medium, args.campaign or state.traffic.campaign))
+                return 0
+            if args.sub == "record":
+                event = record_visit(state, args.source, args.visits, args.reference)
+                store.save(state)
+                _print_json({"recorded": vars(event), "campaign": traffic_snapshot(state)})
+                return 0
 
         if args.cmd == "reset":
             state.pressure = reset_cycle(state.pressure, time.time(), config.cycle_ms)
