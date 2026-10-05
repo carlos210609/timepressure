@@ -17,7 +17,6 @@ from .intelligence import build_intelligence_report
 class Agent:
     def __init__(self, config, store, state):
         self.config, self.store, self.state = config, store, state
-        self.oauth = OAuth()
         self.portfolio = TaskPortfolio(config.data_dir)
         self.last_opportunity_scan = 0.0
 
