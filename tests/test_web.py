@@ -3,7 +3,6 @@ import unittest
 
 from timepressure.config import load_config
 from timepressure.models import PressureState, State
-from timepressure.store import Store
 from timepressure.web import dashboard_payload
 
 
