@@ -18,7 +18,6 @@ First launch installs the required Python packages and Playwright Chromium. Git 
 
 ~~~bash
 python3 timepressure.py
-python3 timepressure.py auth login
 python3 timepressure.py doctor
 python3 timepressure.py run
 ~~~
@@ -26,9 +25,6 @@ python3 timepressure.py run
 Useful commands:
 
 ~~~text
-timepressure auth login
-timepressure auth status
-timepressure auth logout
 timepressure doctor
 timepressure status
 timepressure status --watch
@@ -64,9 +60,9 @@ TIMEPRESSURE_CYCLE_MS=3600000
 TIMEPRESSURE_TICK_MS=10000
 ~~~
 
-## AI providers
+## AI provider
 
-TimePressure supports ChatGPT/OpenAI and NVIDIA NIM hosted APIs. NVIDIA hosted endpoints are OpenAI-compatible. Set `TIMEPRESSURE_AI_PROVIDER=nvidia` and configure `NVIDIA_API_KEY`. The default NVIDIA model is `nvidia/nemotron-3-super-120b-a12b`.
+TimePressure uses NVIDIA NIM as its AI provider. Configure the NVIDIA Developer API key in the environment:
 
 ```text
 TIMEPRESSURE_AI_PROVIDER=nvidia
@@ -75,11 +71,7 @@ NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
 NVIDIA_MODEL=nvidia/nemotron-3-super-120b-a12b
 ```
 
-NVIDIA states that its Developer Program provides free access to NIM API endpoints for prototyping, research and application development, subject to current limits and terms. The key is read only from the environment and is not stored in TimePressure state or exposed by the dashboard.
-
-Use `TIMEPRESSURE_AI_PROVIDER=auto` to keep provider selection flexible, or force `nvidia` / `openai`.
-
-ChatGPT OAuth remains supported. OAuth uses PKCE, state/nonce validation, token refresh and ID-token verification.
+The NVIDIA key is read only from the environment and is not stored in TimePressure state or exposed by the dashboard. NVIDIA free access is subject to its current limits and terms.
 
 ## Browser
 
