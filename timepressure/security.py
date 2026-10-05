@@ -6,7 +6,7 @@ import time
 import urllib.parse
 from pathlib import Path
 
-ALLOWED_AGENT_TOOLS = frozenset({"read_file", "fetch_url", "browser_open"})
+ALLOWED_AGENT_TOOLS = frozenset({"read_file", "fetch_url", "browser_open", "browser_use_temp_email"})
 BLOCKED_ACTION_WORDS = (
     "send payment", "make payment", "purchase", "buy", "checkout",
     "transfer funds", "send money", "wire", "withdraw",
@@ -60,6 +60,11 @@ def assert_agent_action(name, input_text, config):
         raise PermissionError("Browser is disabled by the runtime safety policy.")
     if name == "fetch_url" and not config.allow_network:
         raise PermissionError("Network is disabled by the runtime safety policy.")
+    if name == "browser_use_temp_email":
+        if not getattr(config, "temp_email_enabled", False):
+            raise PermissionError("Temporary email support is disabled.")
+        if not config.browser_enabled:
+            raise PermissionError("Browser is disabled by the runtime safety policy.")
 
 
 def assert_path_safe(raw):
