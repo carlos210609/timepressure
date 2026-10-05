@@ -181,7 +181,7 @@ class Agent:
         task_context = json.dumps(tasks, ensure_ascii=False) if tasks else "No task claimed; the decision engine may choose a direct safe action."
         opportunity_context = json.dumps(candidates[:8], ensure_ascii=False)
         intelligence_context = json.dumps(intelligence, ensure_ascii=False)
-        knowledge = knowledge_context(self.state.working_goal + " " + " ".join(x.get("name", "") for x in candidates[:15]))
+        knowledge = knowledge_context(self.state.working_goal + " " + " ".join(x.get("name", "") for x in candidates[:5]))
         decision_context = focus_context(self.state.decision, now)
         selected_skill = str((next_revenue.source_strategy if next_revenue else (candidates[0].get("id") if candidates else "general")))
         skill_context = compact_skill_context(selected_skill)
