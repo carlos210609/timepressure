@@ -86,6 +86,9 @@ def prepare_temp_email_for_page(browser, config):
         )
 
     provider_page, provider, address = _open_provider(browser, config)
+    if not _provider_allowed(provider["url"], config):
+        provider_page.close()
+        raise PermissionError("Temporary-email provider is not allowlisted.")
     try:
         locator = browser.page.locator(
             'input[type="email"], input[name*="email" i], input[autocomplete="email"]'
