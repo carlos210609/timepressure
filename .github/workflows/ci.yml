@@ -29,7 +29,24 @@ jobs:
       - name: Security regression tests
         run: python -m unittest tests.test_security -v
       - name: Import application
-        run: python -c "import timepressure.cli, timepressure.oauth, timepressure.agent"
+        run: python -c "import timepressure.cli, timepressure.oauth, timepressure.agent, timepressure.web"
+      - name: Dashboard smoke test
+        run: |
+          python - <<'PY'
+          import json
+          import tempfile
+          from timepressure.config import load_config
+          from timepressure.models import PressureState, State
+          from timepressure.web import dashboard_payload
+          with tempfile.TemporaryDirectory() as tmp:
+              config = load_config()
+              config.data_dir = tmp
+              state = State(1, 0, PressureState(0, 10, 1, 10, "alive", 100))
+              payload = dashboard_payload(state, config)
+              assert payload["targetCents"] == 10
+              assert payload["cycleRevenueCents"] == 1
+              assert "access_token" not in json.dumps(payload)
+          PY
       - name: Install Chromium
         run: python -m playwright install --with-deps chromium
       - name: Browser smoke test
