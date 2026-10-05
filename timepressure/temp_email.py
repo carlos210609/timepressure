@@ -79,7 +79,10 @@ class MailTm:
 
 def is_target_domain_allowed(url, allowed_domains):
     from urllib.parse import urlparse
-    host = (urlparse(url).hostname or "").lower().rstrip(".")
+    parsed = urlparse(url)
+    if parsed.scheme != "https":
+        return False
+    host = (parsed.hostname or "").lower().rstrip(".")
     domains = [d.lower().lstrip(".").rstrip(".") for d in allowed_domains]
     return bool(host and domains and any(host == d or host.endswith("." + d) for d in domains))
 
