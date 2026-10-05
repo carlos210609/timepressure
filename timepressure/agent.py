@@ -188,7 +188,7 @@ class Agent:
                 if not isinstance(rationale, str):
                     rationale = ""
                 if action == "none":
-                    return action, input_text, rationale, "skipped"
+                    return index, action, input_text, rationale, "skipped"
                 assert_agent_action(action, input_text, self.config)
                 return index, action, input_text, rationale, run_tool(action, input_text, self.config, self.state, self.store)
 
