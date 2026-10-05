@@ -77,6 +77,7 @@ def build_parser():
 
     run = sub.add_parser("run", help="Run the autonomous agent continuously.")
     run.add_argument("--once", action="store_true", help="Run one agent tick and exit.")
+    run.add_argument("--web", action="store_true", help="Run the local monitoring dashboard alongside the agent.")
 
     status = sub.add_parser("status", help="Show current agent state.")
     status.add_argument("--watch", action="store_true", help="Refresh status continuously.")
@@ -84,6 +85,9 @@ def build_parser():
 
     sub.add_parser("pressure", help="Show the current pressure state.")
     sub.add_parser("doctor", help="Check the local runtime configuration.")
+    web = sub.add_parser("web", help="Open the local OpenCloud-style monitoring dashboard.")
+    web.add_argument("--host", default=None)
+    web.add_argument("--port", type=int, default=8787)
     sub.add_parser("reset", help="Reset the current survival cycle.")
     sub.add_parser("hunt", help="Discover public paid opportunities and queue the best ones.")
     sub.add_parser("tasks", help="Show active multitask opportunities and learned strategy stats.")
@@ -250,7 +254,22 @@ def main(argv=None):
             print(json.dumps(run_tool("browser_open", args.url, config, state, store), indent=2, ensure_ascii=False))
             return 0
 
+        if args.cmd == "web":
+            from .web import serve
+            serve(config, store, state, host=args.host or "127.0.0.1", port=args.port)
+            return 0
+
         if args.cmd == "run":
+            if args.web:
+                from .web import serve
+                import threading
+                web_host = os.getenv("TIMEPRESSURE_WEB_HOST", "127.0.0.1")
+                web_port = int(os.getenv("TIMEPRESSURE_WEB_PORT", "8787"))
+                threading.Thread(
+                    target=serve,
+                    args=(config, store, state, web_host, web_port),
+                    daemon=True,
+                ).start()
             return _run_agent(config, store, state, args.once)
 
         parser.print_help()
