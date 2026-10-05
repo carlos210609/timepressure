@@ -37,7 +37,7 @@ def evaluate(state, now=None):
             "Abandon slow research and choose a reversible high-value action.",
         ))
 
-    if p.status == "critical":
+    if p.pressure >= 80:\n        triggers.append(Trigger(\n            "red_zone", 900, f"Pressure is {p.pressure:.1f}% with {int(left)} seconds left.",\n            "Stop broad exploration. Select the fastest legitimate path with measurable progress and keep independent safe work running in parallel.",\n        ))\n\n    if p.status == "critical":
         triggers.append(Trigger(
             "critical_pressure", 800, f"Pressure is {p.pressure:.1f}%.",
             "Switch to fast time-to-value actions.",
