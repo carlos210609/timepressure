@@ -104,11 +104,15 @@ def build_parser():
     wallet = sub.add_parser("wallet", help="Manage Litecoin Core RPC operations.")
     wallet_sub = wallet.add_subparsers(dest="sub", required=True)
     wallet_sub.add_parser("balance")
+    wallet_sub.add_parser("info")
+    wallet_sub.add_parser("transactions")
     address = wallet_sub.add_parser("address")
     address.add_argument("label", nargs="?", default="timepressure")
     payout = wallet_sub.add_parser("payout")
     payout.add_argument("ltc", type=float)
     payout.add_argument("address", nargs="?")
+    validate = wallet_sub.add_parser("validate")
+    validate.add_argument("address")
     quote = wallet_sub.add_parser("quote")
     quote.add_argument("usd", type=float)
     quote.add_argument("rate", type=float)
@@ -207,7 +211,16 @@ def main(argv=None):
         if args.cmd == "wallet":
             rpc = LitecoinRPC(config)
             if args.sub == "balance":
-                print(f"{rpc.balance()} LTC")
+                _print_json({"ltc": rpc.balance(), "balances": rpc.balances()})
+                return 0
+            if args.sub == "info":
+                _print_json({"wallet": rpc.wallet_info(), "blockchain": rpc.blockchain_info()})
+                return 0
+            if args.sub == "transactions":
+                _print_json(rpc.transactions())
+                return 0
+            if args.sub == "validate":
+                _print_json(rpc.validate_address(args.address))
                 return 0
             if args.sub == "address":
                 print(rpc.new_address(args.label))
