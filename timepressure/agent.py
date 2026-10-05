@@ -259,18 +259,6 @@ class Agent:
                 self.portfolio.finish(tasks[0]["id"], "awaiting_payment" if success else "queued", None if success else out)
             self.store.save(self.state)
         except Exception as exc:
-                        results.append((False, -1, "", "", str(exc)))
-
-            for ok, action_index, action, rationale, out in results:
-                if ok:
-                    self._remember("observation", f"{action}: {out}", {"tool": action, "rationale": rationale[:1000], "task_id": tasks[action_index]["id"] if 0 <= action_index < len(tasks) else None})
-                    if 0 <= action_index < len(tasks):
-                        self.portfolio.finish(tasks[action_index]["id"], "awaiting_payment")
-                else:
-                    self._remember("security_or_runtime_error", out)
-                    if 0 <= action_index < len(tasks):
-                        self.portfolio.finish(tasks[action_index]["id"], "queued", out)
-        except Exception as exc:
             for task in tasks:
                 self.portfolio.finish(task["id"], "queued", str(exc))
             self._remember("security_or_runtime_error", str(exc))
