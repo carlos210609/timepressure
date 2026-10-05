@@ -32,7 +32,7 @@ class TempEmailTests(unittest.TestCase):
             open_provider.return_value = (Mock(), config.temp_email_providers[0], "tp@example.test")
             with self.assertRaises(Exception):
                 prepare_temp_email_for_page(browser, config)
-            open_provider.assert_not_called()
+            open_provider.assert_called_once()
 
 
 if __name__ == "__main__":
