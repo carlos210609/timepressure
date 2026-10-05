@@ -40,4 +40,7 @@ def load_config():
         os.getenv("LTC_AUTO_PAYOUT", "false").lower() == "true",
         (_num("LTC_USD_RATE", 0) or None),
         os.getenv("TIMEPRESSURE_SHELL_ENABLED", "false").lower() == "true",
+        os.getenv("TIMEPRESSURE_TEMP_EMAIL_ENABLED", "false").lower() == "true",
+        os.getenv("TIMEPRESSURE_TEMP_EMAIL_API_URL", "https://api.mail.tm"),
+        [x.strip().lower() for x in os.getenv("TIMEPRESSURE_TEMP_EMAIL_TARGET_DOMAINS", "").split(",") if x.strip()],
     )
