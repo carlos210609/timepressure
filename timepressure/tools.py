@@ -1,22 +1,15 @@
-import ipaddress
-import socket
 import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
-from pathlib import Path
 
+from .audit import AuditLog
 from .browser import Browser
+from .security import assert_agent_action, assert_https_public_url, assert_path_safe, assert_public_host
 
 
 def _safe_path(raw):
-    root = Path.cwd().resolve()
-    resolved = Path(raw).expanduser().resolve()
-    if root != resolved and root not in resolved.parents:
-        raise ValueError("Path is outside the workspace.")
-    if resolved.name == ".env" or ".env" in resolved.parts:
-        raise ValueError("Access to .env is blocked.")
-    return resolved
+    return assert_path_safe(raw)
 
 
 def _safe_command(command):
@@ -29,16 +22,7 @@ def _safe_command(command):
 
 
 def _assert_public_host(host):
-    if not host:
-        raise ValueError("URL must include a hostname.")
-    try:
-        addresses = {item[4][0] for item in socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)}
-    except socket.gaierror as exc:
-        raise ValueError(f"Could not resolve host: {host}") from exc
-    for address in addresses:
-        ip = ipaddress.ip_address(address)
-        if not ip.is_global:
-            raise ValueError(f"Network access to non-public address is blocked: {address}")
+    assert_public_host(host, 443)
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -50,10 +34,7 @@ def _fetch_https(url, max_redirects=5):
     current = url
     opener = urllib.request.build_opener(_NoRedirect)
     for _ in range(max_redirects + 1):
-        parsed = urllib.parse.urlparse(current)
-        if parsed.scheme != "https":
-            raise ValueError("Only HTTPS URLs are allowed.")
-        _assert_public_host(parsed.hostname)
+        assert_https_public_url(current)
         request = urllib.request.Request(current, headers={"User-Agent": "TimePressure/0.4"})
         try:
             with opener.open(request, timeout=10) as response:
@@ -69,11 +50,11 @@ def _fetch_https(url, max_redirects=5):
 
 
 def run_tool(name, input_text, config, state=None, store=None):
+    assert_agent_action(name, input_text, config)
+    audit = AuditLog(config.data_dir)
+    audit.append("tool_attempt", tool=name)
+
     if name == "shell":
-        if not config.shell_enabled:
-            raise ValueError(
-                "Shell tool is disabled. Set TIMEPRESSURE_SHELL_ENABLED=true only if you explicitly trust local command execution."
-            )
         _safe_command(input_text)
         result = subprocess.run(
             ["bash", "-lc", input_text],
@@ -81,29 +62,35 @@ def run_tool(name, input_text, config, state=None, store=None):
             text=True,
             timeout=15,
         )
-        return (result.stdout if result.returncode == 0 else result.stderr or result.stdout)[:20000]
+        output = (result.stdout if result.returncode == 0 else result.stderr or result.stdout)[:20000]
+        audit.append("tool_success", tool=name, returncode=result.returncode)
+        return output
 
     if name == "read_file":
-        return _safe_path(input_text).read_text()[:30000]
+        output = _safe_path(input_text).read_text()[:30000]
+        audit.append("tool_success", tool=name)
+        return output
 
     if name == "fetch_url":
-        if not config.allow_network:
-            return "Network disabled."
-        return _fetch_https(input_text)
+        output = _fetch_https(input_text)
+        audit.append("tool_success", tool=name, url=input_text)
+        return output
 
     if name.startswith("browser_"):
-        if not config.browser_enabled:
-            raise ValueError("Browser disabled.")
         if state is None or store is None:
             raise ValueError("Browser requires state.")
         browser = Browser(config, state, store)
         try:
             if name == "browser_open":
-                return browser.open(input_text)
-            if name == "browser_click":
-                return browser.click(input_text)
-            if name == "browser_fill":
-                return browser.fill(*input_text.split("\n", 1))
+                result = browser.open(input_text)
+            elif name == "browser_click":
+                result = browser.click(input_text)
+            elif name == "browser_fill":
+                result = browser.fill(*input_text.split("\n", 1))
+            else:
+                raise ValueError("Unknown browser tool.")
+            audit.append("tool_success", tool=name)
+            return result
         finally:
             browser.close()
 
