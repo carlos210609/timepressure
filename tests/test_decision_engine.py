@@ -31,6 +31,16 @@ class DecisionEngineTests(unittest.TestCase):
         self.assertFalse(allowed)
         self.assertIn("repeated", reason)
 
+    def test_focus_lock_blocks_unannounced_strategy_switch(self):
+        now = 1000.0
+        action = {"action": "fetch_url", "input": "https://example.com", "rationale": "research", "focus": "validate one opportunity"}
+        state = start_or_update({}, action, "useful evidence", True, now)
+        state["ticks"] = 1
+        different = {"action": "fetch_url", "input": "https://example.org", "rationale": "new", "focus": "chase another opportunity", "mode": "continue"}
+        allowed, reason = should_allow_action(state, different)
+        self.assertFalse(allowed)
+        self.assertIn("focus lock", reason)
+
     def test_repeated_failures_force_pivot(self):
         now = 1000.0
         action = {"action": "fetch_url", "input": "https://example.com", "rationale": "verify"}
