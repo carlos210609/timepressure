@@ -35,7 +35,7 @@ timepressure status --watch
 timepressure run
 timepressure run --once
 timepressure reset
-timepressure revenue add 0.01 --source verified-source
+timepressure revenue add 0.10 --source verified-source
 timepressure browser open https://example.com
 timepressure wallet balance
 ~~~
@@ -44,12 +44,12 @@ No command starts a desktop interface.
 
 ## Survival rule
 
-Default target: USD 0.01 per hour.
+Default target: USD 0.10 per hour.
 
 If the target is reached, the cycle resets. If the deadline passes first, the agent becomes dead and must be reset explicitly.
 
 ~~~text
-TIMEPRESSURE_TARGET_CENTS=1
+TIMEPRESSURE_TARGET_CENTS=10
 TIMEPRESSURE_CYCLE_MS=3600000
 TIMEPRESSURE_TICK_MS=10000
 ~~~
