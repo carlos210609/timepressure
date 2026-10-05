@@ -17,6 +17,7 @@ from .security import security_snapshot
 from .traffic import campaign_url, record_visit, start_campaign, traffic_snapshot
 from .social import approve_post, mark_published, queue_post, record_metrics, register_account, social_snapshot
 from .innovation import intelligence_snapshot
+from .revenue import RevenueOpportunity, RevenueAttempt, select_next_opportunity, start_attempt, complete_attempt, revenue_snapshot, score_revenue_opportunity
 
 
 def _status_payload(state, config):
@@ -138,8 +139,17 @@ def build_parser():
     sm.add_argument("--visits", type=int, default=0)
 
 
-    revenue = sub.add_parser("revenue", help="Record verified revenue.")
+    revenue = sub.add_parser("revenue", help="Revenue Engine and verified revenue ledger.")
     revenue_sub = revenue.add_subparsers(dest="sub", required=True)
+    revenue_sub.add_parser("engine", help="Show Revenue Engine ranking and verified P&L.")
+    revenue_sub.add_parser("next", help="Select the highest expected-value opportunity.")
+    ra = revenue_sub.add_parser("attempt", help="Start an attempt for the selected opportunity.")
+    ra.add_argument("opportunity_id", nargs="?")
+    rf = revenue_sub.add_parser("finish", help="Finish an attempt.")
+    rf.add_argument("attempt_id")
+    rf.add_argument("--revenue-usd", type=float, default=0.0)
+    rf.add_argument("--cost-usd", type=float, default=0.0)
+    rf.add_argument("--reference")
     add = revenue_sub.add_parser("add", help="Add a revenue event to the local ledger.")
     add.add_argument("usd", type=float)
     add.add_argument("--source", default="manual")
@@ -271,6 +281,58 @@ def main(argv=None):
             state.pressure = reset_cycle(state.pressure, time.time(), config.cycle_ms)
             store.save(state)
             print("✓ Cycle reset.")
+            return 0
+
+        if args.cmd == "revenue" and args.sub in ("engine", "next", "attempt", "finish"):
+            raw = []
+            for item in state.revenue_opportunities:
+                try:
+                    raw.append(RevenueOpportunity(**{k: item[k] for k in RevenueOpportunity.__dataclass_fields__}))
+                except (KeyError, TypeError, ValueError):
+                    continue
+            if args.sub == "engine":
+                ranked = []
+                for item in raw:
+                    score = score_revenue_opportunity(item)
+                    ranked.append({**vars(item), **score})
+                ranked.sort(key=lambda x: x["score"], reverse=True)
+                attempts = [RevenueAttempt(**x) for x in state.revenue_attempts]
+                _print_json({"engine": revenue_snapshot(raw, attempts, sum(x.cents for x in state.revenue)), "ranked": ranked[:20]})
+                return 0
+            if args.sub == "next":
+                selected = select_next_opportunity(raw)
+                if not selected:
+                    _print_json({"selected": None, "reason": "no eligible opportunity"})
+                    return 0
+                for item in state.revenue_opportunities:
+                    if item.get("id") == selected.id:
+                        item["status"] = selected.status
+                store.save(state)
+                _print_json({"selected": vars(selected), "score": score_revenue_opportunity(selected)})
+                return 0
+            if args.sub == "attempt":
+                target = next((x for x in raw if x.id == args.opportunity_id), None) if args.opportunity_id else select_next_opportunity(raw)
+                if not target:
+                    raise ValueError("No eligible opportunity.")
+                attempt = start_attempt(target)
+                for item in state.revenue_opportunities:
+                    if item.get("id") == target.id:
+                        item["status"] = "active"
+                state.revenue_attempts.append(vars(attempt))
+                store.save(state)
+                _print_json({"attempt": vars(attempt), "opportunity": vars(target), "score": score_revenue_opportunity(target)})
+                return 0
+            attempt_data = next((x for x in state.revenue_attempts if x.get("id") == args.attempt_id), None)
+            if not attempt_data:
+                raise ValueError("Unknown attempt.")
+            attempt = RevenueAttempt(**attempt_data)
+            if attempt.status != "active":
+                raise ValueError("Attempt is not active.")
+            finished = complete_attempt(attempt, round(args.revenue_usd * 100), round(args.cost_usd * 100), args.reference)
+            attempt_data.update(vars(finished))
+            state.revenue_cost_cents += finished.cost_cents
+            store.save(state)
+            _print_json({"attempt": vars(finished), "verifiedRevenueRecorded": False, "message": "Only revenue add with a provider-confirmed payment reference enters the verified ledger."})
             return 0
 
         if args.cmd == "revenue" and args.sub == "add":

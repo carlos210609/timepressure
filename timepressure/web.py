@@ -10,6 +10,7 @@ from .chat_controls import parse_pressure_command, pressure_status
 from .pressure import calculate_pressure
 from .traffic import traffic_snapshot
 from .innovation import intelligence_snapshot
+from .revenue import RevenueOpportunity, RevenueAttempt, score_revenue_opportunity, revenue_snapshot
 
 
 INDEX = r"""<!doctype html>
@@ -49,6 +50,7 @@ pre{white-space:pre-wrap;word-break:break-word;margin:0;color:#d7dce5;font:12px/
 <div class="card"><div class="head"><h2>Working plan</h2><span class="badge" id="taskcount">0 tasks</span></div><div class="list" id="plan"><div class="empty">No active plan.</div></div></div>
 </div>
 <div class="section2">
+<div class="card"><div class="head"><h2>Revenue Engine</h2><span class="badge">expected value</span></div><pre id="revenueEngine">Loading…</pre></div>
 <div class="card"><div class="head"><h2>Intelligence engine</h2><span class="badge">15 functions</span></div><pre id="intel">Loading…</pre></div>
 <div class="card"><div class="head"><h2>Browser activity</h2><span class="badge">latest</span></div><div id="browser" class="browser"><div class="browserbar">No browser activity yet</div><div class="browserbody empty">The agent has not opened a page.</div></div></div>
 <div class="card"><div class="head"><h2>Revenue ledger</h2><span class="badge" id="revcount">0 events</span></div><div class="list" id="ledger"><div class="empty">No verified revenue recorded.</div></div></div>
@@ -73,6 +75,7 @@ function render(d){
  const left=Math.max(0,d.secondsLeft||0); $('left').textContent=left>3600?Math.floor(left/3600)+'h '+Math.floor((left%3600)/60)+'m':Math.floor(left/60)+'m '+left%60+'s';
  $('deadline').textContent=d.deadline||'—'; $('chatgpt').innerHTML=d.chatgpt?'<span class="green">Connected</span>':'<span class="red">Disconnected</span>'; $('model').textContent=d.model||'—';
  const so=d.social||{}; $('accounts').textContent=(so.totals||{}).accounts||0; $('socialsub').textContent=((so.totals||{}).connected||0)+' connected · '+((so.totals||{}).published||0)+' published'; const tr=d.traffic||{}; $('traffic').textContent=tr.active?(tr.verified_visits||0)+' / '+(tr.target_visits||0):'—'; $('trafficTarget').textContent=tr.active?((tr.progress||0).toFixed(1)+'% · '+esc(tr.status)): 'No campaign';
+ const re=d.revenueEngine||{}; const rs=re.summary||{}; const nx=re.next; $('revenueEngine').textContent=JSON.stringify({verifiedRevenueUsd:((rs.verifiedRevenueCents||0)/100).toFixed(2),verifiedCostUsd:((rs.verifiedCostCents||0)/100).toFixed(2),netProfitUsd:((rs.netProfitCents||0)/100).toFixed(2),roiPct:rs.roiPct,nextOpportunity:nx?{title:nx.title,category:nx.category,expectedProfitUsd:((nx.expectedProfitCents||0)/100).toFixed(2),hourlyValueUsd:((nx.hourlyValueCents||0)/100).toFixed(2),probability:Math.round((nx.probability||0)*100)+'%',risk:Math.round((nx.risk||0)*100)+'%'}:null},null,2);
  $('thought').textContent=d.lastThought||'Waiting for agent activity…';
  const plan=d.plan||[]; $('taskcount').textContent=plan.length+' tasks'; $('plan').innerHTML=plan.length?plan.map((x,i)=>'<div class="item"><b>#'+(i+1)+'</b><small>'+esc(x)+'</small></div>').join(''):'<div class="empty">No active plan.</div>';
  const b=(d.browserHistory||[]).slice(-1)[0]; $('browser').innerHTML=b?'<div class="browserbar">'+esc(b.url)+'</div><div class="browserbody"><span class="pill">'+esc(b.action)+'</span><h3>'+esc(b.title||'Untitled')+'</h3><small>'+new Date(b.timestamp*1000).toLocaleString()+'</small></div>':'<div class="browserbar">No browser activity yet</div><div class="browserbody empty">The agent has not opened a page.</div>';
@@ -100,6 +103,25 @@ def _local_ip():
         return "127.0.0.1"
 
 
+def _revenue_engine_payload(state):
+    opportunities = []
+    for raw in state.revenue_opportunities:
+        try:
+            item = RevenueOpportunity(**{k: raw[k] for k in RevenueOpportunity.__dataclass_fields__})
+            opportunities.append({**raw, **score_revenue_opportunity(item)})
+        except (KeyError, TypeError, ValueError):
+            continue
+    opportunities.sort(key=lambda x: x.get("score", -1), reverse=True)
+    attempts = []
+    for raw in state.revenue_attempts:
+        try:
+            attempts.append(RevenueAttempt(**raw))
+        except (TypeError, ValueError):
+            pass
+    snapshot = revenue_snapshot([], attempts, sum(x.cents for x in state.revenue))
+    return {"summary": snapshot, "next": opportunities[0] if opportunities else None, "opportunities": opportunities[:10]}
+
+
 def dashboard_payload(state, config):
     state.pressure = calculate_pressure(time.time(), state.pressure, config.pressure_multiplier)
     return {
@@ -124,6 +146,7 @@ def dashboard_payload(state, config):
         "traffic": traffic_snapshot(state),
         "social": social_snapshot(state),
         "intelligence": intelligence_snapshot(state, config),
+        "revenueEngine": _revenue_engine_payload(state),
     }
 
 

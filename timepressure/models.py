@@ -91,6 +91,9 @@ class State:
     working_goal: str = "Generate legitimate value and record verified revenue."
     working_plan: list[str] = field(default_factory=list)
     last_thought: str | None = None
+    revenue_opportunities: list[dict] = field(default_factory=list)
+    revenue_attempts: list[dict] = field(default_factory=list)
+    revenue_cost_cents: int = 0
 
     def to_dict(self):
         return {
@@ -118,6 +121,9 @@ class State:
                 "plan": self.working_plan,
                 "lastThought": self.last_thought,
             },
+            "revenueOpportunities": self.revenue_opportunities[-100:],
+            "revenueAttempts": self.revenue_attempts[-100:],
+            "revenueCostCents": self.revenue_cost_cents,
         }
 
     @classmethod
@@ -168,6 +174,9 @@ class State:
             d.get("working", {}).get("goal", "Generate legitimate value and record verified revenue."),
             d.get("working", {}).get("plan", []),
             d.get("working", {}).get("lastThought"),
+            list(d.get("revenueOpportunities", [])),
+            list(d.get("revenueAttempts", [])),
+            int(d.get("revenueCostCents", 0)),
         )
 
 
