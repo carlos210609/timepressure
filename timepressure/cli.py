@@ -72,7 +72,7 @@ def build_parser():
         prog="timepressure",
         description="TimePressure — open-source autonomous agent runtime driven by time pressure.",
     )
-    parser.add_argument("--version", action="version", version="TimePressure 0.4.0")
+    parser.add_argument("--version", action="version", version="TimePressure 0.5.0")
     sub = parser.add_subparsers(dest="cmd")
 
     run = sub.add_parser("run", help="Run the autonomous agent continuously.")
@@ -156,7 +156,7 @@ def main(argv=None):
             from .oauth import OAuth
             _print_json({
                 "python": sys.version.split()[0],
-                "version": "0.4.0",
+                "version": "0.5.0",
                 "dataDir": config.data_dir,
                 "apiKeyConfigured": bool(config.api_key),
                 "chatgptOAuth": OAuth().connected(),
