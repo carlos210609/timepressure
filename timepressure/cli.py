@@ -146,13 +146,12 @@ def main(argv=None):
                 time.sleep(max(0.5, args.interval))
 
         if args.cmd == "doctor":
-            from .oauth import OAuth
             _print_json({
                 "python": sys.version.split()[0],
                 "version": "0.5.0",
                 "dataDir": config.data_dir,
-                "apiKeyConfigured": bool(config.api_key),
-                "chatgptOAuth": OAuth().connected(),
+                "nvidiaConfigured": bool(config.nvidia_api_key),
+                "aiProvider": config.ai_provider,
                 "networkEnabled": config.allow_network,
                 "browserEnabled": config.browser_enabled,
                 "browserHeadless": config.browser_headless,
