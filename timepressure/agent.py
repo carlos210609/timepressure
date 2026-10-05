@@ -7,7 +7,6 @@ from .models import MemoryEvent
 from .pressure import calculate_pressure
 from .tools import TOOLS, run_tool
 from .triggers import compact, evaluate
-from .oauth import OAuth
 from .revenue_playbook import top_strategies
 from .task_engine import TaskPortfolio
 from .opportunity_hunter import discover
