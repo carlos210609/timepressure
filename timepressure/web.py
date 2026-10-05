@@ -1,9 +1,7 @@
 import json
 import socket
-import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
 from urllib.parse import urlparse
 
 from .pressure import calculate_pressure
