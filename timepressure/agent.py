@@ -10,6 +10,7 @@ from .triggers import compact, evaluate
 from .oauth import OAuth
 from .revenue_playbook import top_strategies
 from .task_engine import TaskPortfolio
+from .opportunity_hunter import discover
 
 
 class Agent:
@@ -72,6 +73,9 @@ class Agent:
             active_categories=active_categories,
         )
         active_tasks = self.portfolio.sync(candidates, max_active=6)
+        opportunities = discover(self.config, limit=12)
+        if opportunities:
+            active_tasks = self.portfolio.add_opportunities(opportunities, max_active=6)
         self.state.working_plan = [
             f"{x['name']}: {x['instruction']}" for x in active_tasks[:6]
         ]
@@ -128,7 +132,7 @@ class Agent:
                 )
                 self._remember("observation", f"{action}: {out}")
                 if task:
-                    self.portfolio.finish(task["id"], "completed")
+                    self.portfolio.finish(task["id"], "awaiting_payment")
             elif task:
                 self.portfolio.finish(task["id"], "queued")
         except Exception as exc:
