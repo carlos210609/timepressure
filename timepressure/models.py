@@ -96,6 +96,7 @@ class State:
     revenue_cost_cents: int = 0
     # Persistent decision state prevents strategy thrashing between ticks.
     decision: dict[str, Any] = field(default_factory=dict)
+    learning: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self):
         return {
@@ -127,6 +128,7 @@ class State:
             "revenueAttempts": self.revenue_attempts[-100:],
             "revenueCostCents": self.revenue_cost_cents,
             "decision": self.decision,
+            "learning": self.learning,
         }
 
     @classmethod
@@ -181,6 +183,7 @@ class State:
             list(d.get("revenueAttempts", [])),
             int(d.get("revenueCostCents", 0)),
             dict(d.get("decision", {})),
+            dict(d.get("learning", {})),
         )
 
 
