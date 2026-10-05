@@ -18,6 +18,7 @@ class Agent:
         self.config, self.store, self.state = config, store, state
         self.oauth = OAuth()
         self.portfolio = TaskPortfolio(config.data_dir)
+        self.last_opportunity_scan = 0.0
 
     def _remember(self, kind, text, metadata=None):
         self.store.add_memory(
@@ -73,9 +74,12 @@ class Agent:
             active_categories=active_categories,
         )
         active_tasks = self.portfolio.sync(candidates, max_active=6)
-        opportunities = discover(self.config, limit=12)
-        if opportunities:
-            active_tasks = self.portfolio.add_opportunities(opportunities, max_active=6)
+        opportunities = []
+        if now - self.last_opportunity_scan >= 300:
+            opportunities = discover(self.config, limit=12)
+            self.last_opportunity_scan = now
+            if opportunities:
+                active_tasks = self.portfolio.add_opportunities(opportunities, max_active=6)
         self.state.working_plan = [
             f"{x['name']}: {x['instruction']}" for x in active_tasks[:6]
         ]
