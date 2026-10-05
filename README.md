@@ -42,6 +42,14 @@ timepressure wallet balance
 
 No command starts a desktop interface.
 
+## Revenue intelligence
+
+TimePressure includes a built-in revenue strategy playbook covering product, SaaS, APIs, development, research, SEO, data, content, education, recurring services, affiliate/referral programs, authorized security bounties, open-source bounties, marketplaces, integrations, monitoring and AI workflows.
+
+The multitask engine ranks opportunities using pressure, time-to-value, expected value, automation potential, repeatability and category diversity. It maintains a persistent portfolio of up to six active opportunities in `.data/tasks.json` and chooses the highest-priority safe task on each agent tick.
+
+This is a strategy database, not a guarantee of income. A strategy becomes revenue only after a legitimate payment is actually verified.
+
 ## Survival rule
 
 Default target: USD 0.10 per hour.
