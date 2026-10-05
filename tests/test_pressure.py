@@ -11,7 +11,7 @@ class PressureTests(unittest.TestCase):
         state = PressureState(0, 1, 0, 0, "alive", 1000)
         self.assertGreater(calculate_pressure(500, state).pressure, 0)
 
-    def test_dies_after_deadline(self):
+    def test_nonlinear_pressure_gets_stronger_late(self):\n        state = PressureState(0, 100, 0, 0, "alive", 1000)\n        early = calculate_pressure(250, state, 1.5).pressure\n        late = calculate_pressure(750, state, 1.5).pressure\n        self.assertGreater(late, early)\n\n    def test_pressure_multiplier_is_stronger_than_baseline(self):\n        state = PressureState(0, 100, 0, 0, "alive", 1000)\n        base = calculate_pressure(750, state, 1.0).pressure\n        strong = calculate_pressure(750, state, 1.5).pressure\n        self.assertGreater(strong, base)\n\n    def test_dies_after_deadline(self):
         state = PressureState(0, 1, 0, 0, "alive", 1000)
         self.assertEqual(calculate_pressure(1000, state).status, "dead")
 
