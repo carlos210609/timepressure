@@ -106,7 +106,7 @@ def build_parser():
     wallet_sub.add_parser("balance")
     wallet_sub.add_parser("info")
     wallet_sub.add_parser("transactions")
-    address = wallet_sub.add_parser("address")
+    address = wallet_sub.add_parser("address", aliases=["receive"])
     address.add_argument("label", nargs="?", default="timepressure")
     payout = wallet_sub.add_parser("payout")
     payout.add_argument("ltc", type=float)
@@ -236,6 +236,8 @@ def main(argv=None):
                     raise ValueError("Set LTC_PAYOUT_ADDRESS or pass an address.")
                 if args.ltc <= 0:
                     raise ValueError("Payout amount must be positive.")
+                if args.ltc < config.ltc_min_payout:
+                    raise ValueError(f"Payout is below LTC_MIN_PAYOUT ({config.ltc_min_payout:g} LTC).")
                 if rpc.balance() < args.ltc:
                     raise ValueError("Insufficient LTC balance.")
                 _print_json({"txid": rpc.send(target, args.ltc), "address": target, "amountLtc": args.ltc})
