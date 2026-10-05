@@ -12,6 +12,8 @@ from .pressure import calculate_pressure, record_revenue, reset_cycle
 from .store import Store
 from .opportunity_hunter import discover
 from .task_engine import TaskPortfolio
+from .audit import AuditLog
+from .security import security_snapshot
 
 
 def _status_payload(state, oauth):
@@ -150,6 +152,7 @@ def main(argv=None):
             from .oauth import OAuth
             _print_json({
                 "python": sys.version.split()[0],
+                "security": security_snapshot(config),
                 "version": "0.4.0",
                 "dataDir": config.data_dir,
                 "apiKeyConfigured": bool(config.api_key),
@@ -230,6 +233,9 @@ def main(argv=None):
                 _print_json({"usd": args.usd, "ltcUsd": args.rate, "ltc": usd_to_ltc(args.usd, args.rate)})
                 return 0
             if args.sub == "payout":
+                if config.ltc_auto_payout or __import__("os").getenv("TIMEPRESSURE_ALLOW_PAYOUT", "false").lower() != "true":
+                    raise ValueError("Payouts are disabled by the hardening policy. Set TIMEPRESSURE_ALLOW_PAYOUT=true for an explicit manual payout.")
+                AuditLog(config.data_dir).append("wallet_payout_requested", amount_ltc=args.ltc)
                 target = args.address or config.ltc_payout_address
                 if not target:
                     raise ValueError("Set LTC_PAYOUT_ADDRESS or pass an address.")
@@ -237,7 +243,9 @@ def main(argv=None):
                     raise ValueError("Payout amount must be positive.")
                 if rpc.balance() < args.ltc:
                     raise ValueError("Insufficient LTC balance.")
-                _print_json({"txid": rpc.send(target, args.ltc), "address": target, "amountLtc": args.ltc})
+                txid = rpc.send(target, args.ltc)
+                AuditLog(config.data_dir).append("wallet_payout_sent", amount_ltc=args.ltc, address=target, txid=txid)
+                _print_json({"txid": txid, "address": target, "amountLtc": args.ltc})
                 return 0
 
         if args.cmd == "browser" and args.sub == "open":
