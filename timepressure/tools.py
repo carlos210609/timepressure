@@ -6,6 +6,7 @@ import urllib.request
 from .audit import AuditLog
 from .browser import Browser
 from .security import assert_agent_action, assert_https_public_url, assert_path_safe, assert_public_host
+from .temp_email import prepare_temp_email_for_page
 
 
 def _safe_path(raw):
@@ -87,6 +88,8 @@ def run_tool(name, input_text, config, state=None, store=None):
                 result = browser.click(input_text)
             elif name == "browser_fill":
                 result = browser.fill(*input_text.split("\n", 1))
+            elif name == "browser_use_temp_email":
+                result = prepare_temp_email_for_page(browser, config)
             else:
                 raise ValueError("Unknown browser tool.")
             audit.append("tool_success", tool=name)
@@ -104,4 +107,5 @@ TOOLS = {
     "browser_open": "Open an allowed HTTPS page in a real Chromium browser and inspect its text.",
     "browser_click": "Click a CSS selector on the current browser page.",
     "browser_fill": "Fill a form field as selector then newline then value. Never use for payments or purchases.",
+    "browser_use_temp_email": "On an explicitly allowlisted test domain, create a Mail.tm temporary mailbox and fill a detected email field. Does not bypass CAPTCHA or verification.",
 }
