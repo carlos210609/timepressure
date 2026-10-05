@@ -44,4 +44,6 @@ def load_config():
         [x.strip().lower() for x in os.getenv("TIMEPRESSURE_TEMP_EMAIL_TARGET_DOMAINS", "").split(",") if x.strip()],
         ["temp-mail.io"],
         [{"name": "temp-mail.io", "url": "https://temp-mail.io/en", "domain": "temp-mail.io"}],
+        max(1.0, min(3.0, _num("TIMEPRESSURE_PRESSURE_MULTIPLIER", 1.5))),
+        max(1, int(_num("TIMEPRESSURE_IDLE_TICK_THRESHOLD", 3))),
     )
