@@ -107,5 +107,5 @@ TOOLS = {
     "browser_open": "Open an allowed HTTPS page in a real Chromium browser and inspect its text.",
     "browser_click": "Click a CSS selector on the current browser page.",
     "browser_fill": "Fill a form field as selector then newline then value. Never use for payments or purchases.",
-    "browser_use_temp_email": "On an explicitly allowlisted test domain, create a Mail.tm temporary mailbox and fill a detected email field. Does not bypass CAPTCHA or verification.",
+    "browser_use_temp_email": "On an explicitly allowlisted test domain, open the configured temporary-email provider in the browser, obtain its displayed address, and fill a detected email field. Does not bypass CAPTCHA or verification.",
 }
