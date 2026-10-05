@@ -26,7 +26,7 @@ INDEX = r"""<!doctype html>
 main{padding:28px;max-width:1500px;width:100%;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.eyebrow{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.14em}.title{font-size:28px;font-weight:800;letter-spacing:-.05em;margin-top:5px}.live{display:flex;align-items:center;gap:8px;color:var(--muted)}.dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 14px var(--good)}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:linear-gradient(145deg,rgba(22,26,35,.95),rgba(13,16,22,.95));border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 12px 35px rgba(0,0,0,.16)}.label{font-size:12px;color:var(--muted);margin-bottom:10px}.value{font-size:27px;font-weight:800;letter-spacing:-.04em}.sub{font-size:12px;color:var(--muted);margin-top:7px}
 .progress{height:7px;background:#242a34;border-radius:20px;overflow:hidden;margin-top:15px}.bar{height:100%;background:var(--accent);width:0;transition:width .4s}.section{margin-top:18px;display:grid;grid-template-columns:1.25fr .75fr;gap:14px}.section2{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px}.head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.head h2{font-size:15px;margin:0}.badge{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted)}
-pre{white-space:pre-wrap;word-break:break-word;margin:0;color:#d7dce5;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;max-height:330px;overflow:auto}.list{display:grid;gap:9px;max-height:330px;overflow:auto}.item{border:1px solid var(--line);background:#0d1016;border-radius:9px;padding:10px}.item b{font-size:12px}.item small{display:block;color:var(--muted);margin-top:4px}.empty{color:var(--muted);padding:25px;text-align:center}.browser{background:#07090d;border:1px solid var(--line);border-radius:10px;overflow:hidden}.browserbar{padding:8px 10px;background:#11151d;color:#8791a0;font:11px monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.browserbody{padding:15px;max-height:270px;overflow:auto}.pill{display:inline-block;padding:4px 8px;border-radius:6px;background:#18202c;color:#aebbd0;font-size:11px}.green{color:var(--good)}.yellow{color:var(--warn)}.red{color:var(--bad)}
+pre{white-space:pre-wrap;word-break:break-word;margin:0;color:#d7dce5;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;max-height:330px;overflow:auto}.list{display:grid;gap:9px;max-height:330px;overflow:auto}.item{border:1px solid var(--line);background:#0d1016;border-radius:9px;padding:10px}.item b{font-size:12px}.item small{display:block;color:var(--muted);margin-top:4px}.empty{color:var(--muted);padding:25px;text-align:center}.browser{background:#07090d;border:1px solid var(--line);border-radius:10px;overflow:hidden}.browserbar{padding:8px 10px;background:#11151d;color:#8791a0;font:11px monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.browserbody{padding:15px;max-height:270px;overflow:auto}.pill{display:inline-block;padding:4px 8px;border-radius:6px;background:#18202c;color:#aebbd0;font-size:11px}.green{color:var(--good)}.yellow{color:var(--warn)}.red{color:var(--bad)}.pressure-control{grid-column:1/-1}.pressureBtn{border:1px solid var(--line);background:#0d1016;color:var(--muted);border-radius:8px;padding:8px 6px;font-size:11px;font-weight:700;cursor:pointer}.pressureBtn:hover,.pressureBtn.active{background:#18202c;color:#fff;border-color:#3a4557}
 @media(max-width:1000px){.layout{grid-template-columns:1fr}.side{display:none}.grid{grid-template-columns:repeat(2,1fr)}.section,.section2{grid-template-columns:1fr}main{padding:18px}}
 @media(max-width:560px){.grid{grid-template-columns:1fr}.title{font-size:23px}}
 </style>
@@ -44,7 +44,7 @@ pre{white-space:pre-wrap;word-break:break-word;margin:0;color:#d7dce5;font:12px/
 <div class="card"><div class="label">Traffic</div><div class="value" id="traffic">—</div><div class="sub" id="trafficTarget">No campaign</div></div>
 <div class="card"><div class="label">ChatGPT</div><div class="value" id="chatgpt">—</div><div class="sub" id="model">—</div></div>
 </div>
-<div class="section">
+<div class="card pressure-control"><div class="head"><div><h2>Pressure Control</h2><div class="sub">Ajuste a intensidade sem usar o chat.</div></div><span class="badge" id="pressureMode">NORMAL</span></div><div style="display:flex;align-items:end;justify-content:space-between;gap:18px;margin:12px 0 6px"><div><div class="label">Pressure intensity</div><div class="value" id="pressureSetting">50%</div></div><div class="sub" id="pressureMultiplier">1.50× multiplier</div></div><input id="pressureSlider" type="range" min="0" max="100" step="1" value="50" style="width:100%;accent-color:var(--accent)"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px"><button class="pressureBtn" data-pressure="0">LOW</button><button class="pressureBtn" data-pressure="50">NORMAL</button><button class="pressureBtn" data-pressure="75">HIGH</button><button class="pressureBtn" data-pressure="100">EXTREME</button></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:12px"><small id="pressureHint" class="sub">Balanced execution intensity.</small><button id="applyPressure" style="border:1px solid var(--line);background:#18202c;color:#fff;border-radius:9px;padding:9px 14px;font-weight:700">Apply pressure</button></div><div id="pressureFeedback" class="sub" style="min-height:16px;margin-top:8px"></div></div><div class="section">
 <div class="card"><div class="head"><h2>Talk to TimePressure</h2><span class="badge">AI console</span></div><div id="chat" class="list" style="height:250px;max-height:250px"><div class="empty">Ask about the agent, pressure, revenue, tasks or social campaigns.</div></div><form id="chatForm" style="display:flex;gap:8px;margin-top:10px"><input id="chatInput" autocomplete="off" placeholder="Ex.: o que você está fazendo agora?" style="flex:1;background:#0d1016;border:1px solid var(--line);color:var(--text);border-radius:9px;padding:11px"><button style="border:1px solid var(--line);background:#18202c;color:#fff;border-radius:9px;padding:0 16px">Enviar</button></form></div>
 <div class="card"><div class="head"><h2>Current AI decision</h2><span class="badge">last thought</span></div><pre id="thought">Waiting for agent activity…</pre></div>
 <div class="card"><div class="head"><h2>Working plan</h2><span class="badge" id="taskcount">0 tasks</span></div><div class="list" id="plan"><div class="empty">No active plan.</div></div></div>
@@ -70,7 +70,7 @@ function render(d){
  $('revenue').textContent=money(d.cycleRevenueCents);
  $('target').textContent='target '+money(d.targetCents);
  $('bar').style.width=Math.min(100,(d.cycleRevenueCents/Math.max(1,d.targetCents))*100)+'%';
- $('pressure').textContent=(d.pressure||0).toFixed(1)+'%';
+ $('pressure').textContent=(d.pressure||0).toFixed(1)+'%';setPressurePreview(Math.round(Math.max(0,Math.min(100,(((d.pressureMultiplier||1.5)-1)/2)*100))));
  $('status').innerHTML='<span class="'+statusClass(d.status)+'">'+esc(d.status)+'</span>';
  const left=Math.max(0,d.secondsLeft||0); $('left').textContent=left>3600?Math.floor(left/3600)+'h '+Math.floor((left%3600)/60)+'m':Math.floor(left/60)+'m '+left%60+'s';
  $('deadline').textContent=d.deadline||'—'; $('chatgpt').innerHTML=d.chatgpt?'<span class="green">Connected</span>':'<span class="red">Disconnected</span>'; $('model').textContent=d.model||'—';
@@ -86,7 +86,7 @@ function render(d){
 let chatHistory=[];
 function addChat(role,text){const box=$('chat');if(box.querySelector('.empty'))box.innerHTML='';const el=document.createElement('div');el.className='item';el.innerHTML='<b>'+esc(role==='user'?'Você':'TimePressure')+'</b><small>'+esc(text)+'</small>';box.appendChild(el);box.scrollTop=box.scrollHeight;}
 $('chatForm').addEventListener('submit',async e=>{e.preventDefault();const input=$('chatInput');const message=input.value.trim();if(!message)return;input.value='';addChat('user',message);try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,history:chatHistory.slice(-10)})});const d=await r.json();if(!r.ok)throw Error(d.error||'Falha no chat');addChat('assistant',d.reply);chatHistory.push({role:'user',content:message},{role:'assistant',content:d.reply});}catch(err){addChat('assistant','Erro: '+err.message);}});
-async function poll(){try{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw Error();render(await r.json())}catch(e){$('live').textContent='Offline';}}
+const pressureSlider=$('pressureSlider'),pressureFeedback=$('pressureFeedback');function setPressurePreview(v){v=Math.max(0,Math.min(100,Number(v)||0));pressureSlider.value=v;$('pressureSetting').textContent=v+'%';const m=1+(v/100)*2;$('pressureMultiplier').textContent=m.toFixed(2)+'× multiplier';const mode=v>=90?'EXTREME':v>=63?'HIGH':v<=20?'LOW':'NORMAL';$('pressureMode').textContent=mode;$('pressureHint').textContent=mode==='EXTREME'?'Maximum configured execution intensity.':mode==='HIGH'?'High execution intensity.':mode==='LOW'?'Conservative execution intensity.':'Balanced execution intensity.';document.querySelectorAll('.pressureBtn').forEach(b=>b.classList.toggle('active',Number(b.dataset.pressure)===v));}pressureSlider.addEventListener('input',()=>setPressurePreview(pressureSlider.value));document.querySelectorAll('.pressureBtn').forEach(b=>b.addEventListener('click',()=>setPressurePreview(b.dataset.pressure)));$('applyPressure').addEventListener('click',async()=>{const value=Number(pressureSlider.value);pressureFeedback.textContent='Applying…';try{const r=await fetch('/api/pressure',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({intensity:value})});const d=await r.json();if(!r.ok)throw Error(d.error||'Falha ao alterar pressão');setPressurePreview(d.intensity);pressureFeedback.textContent='Applied · '+Number(d.multiplier).toFixed(2)+'× multiplier';}catch(e){pressureFeedback.textContent='Erro: '+e.message;}});async function poll(){try{const r=await fetch('/api/state',{cache:'no-store'});if(!r.ok)throw Error();render(await r.json())}catch(e){$('live').textContent='Offline';}}
 poll();setInterval(poll,1500);
 </script>
 </body></html>"""
@@ -203,6 +203,24 @@ def serve(config, store, state, host=None, port=8787):
                 self._send(200, "application/json; charset=utf-8", json.dumps(payload, ensure_ascii=False))
                 return
             self._send(404, "text/plain; charset=utf-8", "Not found")
+
+        def do_POST(self):
+            path = urlparse(self.path).path
+            if path != '/api/pressure':
+                self._send(404, 'text/plain; charset=utf-8', 'Not found')
+                return
+            length = int(self.headers.get('Content-Length', '0'))
+            if length > 2000:
+                self._send(413, 'application/json; charset=utf-8', json.dumps({'error': 'Request too large'})); return
+            try:
+                body = json.loads(self.rfile.read(length) or b'{}')
+                intensity = float(body.get('intensity'))
+                if not 0 <= intensity <= 100:
+                    raise ValueError
+                config.pressure_multiplier = 1.0 + (intensity / 100.0) * 2.0
+                self._send(200, 'application/json; charset=utf-8', json.dumps({'ok': True, 'intensity': intensity, 'multiplier': config.pressure_multiplier}))
+            except (TypeError, ValueError):
+                self._send(400, 'application/json; charset=utf-8', json.dumps({'error': 'Intensity must be a number between 0 and 100.'}))
 
         def log_message(self, *_args):
             pass
