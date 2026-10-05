@@ -184,3 +184,6 @@ class Config:
     ltc_auto_payout: bool
     ltc_usd_rate: float | None
     shell_enabled: bool
+    temp_email_enabled: bool
+    temp_email_api_url: str
+    temp_email_target_domains: list[str]
