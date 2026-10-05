@@ -156,6 +156,8 @@ def main(argv=None):
                 "browserEnabled": config.browser_enabled,
                 "browserHeadless": config.browser_headless,
                 "browserAllowedDomains": config.browser_allowed_domains,
+                "temporaryEmailEnabled": config.temp_email_enabled,
+                "temporaryEmailTargetDomains": config.temp_email_target_domains,
                 "targetUsd": config.target_cents / 100,
                 "cycleMs": config.cycle_ms,
                 "tickMs": config.tick_ms,
