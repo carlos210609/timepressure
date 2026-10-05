@@ -94,6 +94,11 @@ def start_or_update(decision: dict, action: dict, result: str, success: bool, no
 def should_allow_action(decision: dict, action: dict) -> tuple[bool, str]:
     if not action:
         return False, "no action"
+    if decision and decision.get("last_success") and int(decision.get("ticks", 0)) < FOCUS_TTL_TICKS:
+        previous_focus = str(decision.get("focus", "")).strip()
+        new_focus = str(action.get("focus", "")).strip()
+        if previous_focus and new_focus and previous_focus != new_focus and action.get("mode") != "pivot":
+            return False, "focus lock active; pivot must be explicit"
     if decision and decision.get("last_action") == action.get("action") and decision.get("last_input") == action.get("input"):
         if decision.get("last_success") and int(decision.get("ticks", 0)) >= FOCUS_TTL_TICKS:
             return False, "exact action repeated after its focus window"
