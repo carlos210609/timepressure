@@ -1,13 +1,13 @@
 from .models import PressureState
 
-def calculate_pressure(now, state):
+def calculate_pressure(now, state, multiplier=1.5):
     if state.status == "dead":
         return state
     duration = max(1.0, state.deadline - state.cycle_started_at)
     elapsed = max(0.0, now - state.cycle_started_at)
     ratio = min(1.0, elapsed / duration)
     revenue_ratio = 1.0 if state.target_cents <= 0 else min(1.0, state.cycle_revenue_cents / state.target_cents)
-    pressure = max(0.0, min(100.0, (ratio - revenue_ratio) * 100))
+    # Nonlinear urgency: the clock becomes substantially more demanding in the\n    # second half of a cycle, while verified revenue directly relieves pressure.\n    urgency_curve = ratio ** 1.35\n    pressure = max(0.0, min(100.0, (urgency_curve - revenue_ratio) * 100 * max(1.0, multiplier)))
     status = "alive"
     if state.cycle_revenue_cents < state.target_cents:
         if now >= state.deadline:
