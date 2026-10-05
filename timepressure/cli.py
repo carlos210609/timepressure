@@ -10,6 +10,8 @@ from .litecoin import LitecoinRPC, usd_to_ltc
 from .models import RevenueEvent
 from .pressure import calculate_pressure, record_revenue, reset_cycle
 from .store import Store
+from .opportunity_hunter import discover
+from .task_engine import TaskPortfolio
 
 
 def _status_payload(state, oauth):
@@ -81,6 +83,8 @@ def build_parser():
     sub.add_parser("pressure", help="Show the current pressure state.")
     sub.add_parser("doctor", help="Check the local runtime configuration.")
     sub.add_parser("reset", help="Reset the current survival cycle.")
+    sub.add_parser("hunt", help="Discover public paid opportunities and queue the best ones.")
+    sub.add_parser("tasks", help="Show active multitask opportunities and learned strategy stats.")
 
     auth = sub.add_parser("auth", help="Manage ChatGPT authentication.")
     auth_sub = auth.add_subparsers(dest="sub", required=True)
@@ -176,6 +180,18 @@ def main(argv=None):
             if args.sub == "status":
                 _print_json({"connected": oauth.connected(), "credentialFile": str(oauth.path)})
                 return 0
+
+        if args.cmd == "hunt":
+            opportunities = discover(config, limit=12)
+            portfolio = TaskPortfolio(config.data_dir)
+            tasks = portfolio.add_opportunities(opportunities, max_active=6)
+            _print_json({"discovered": opportunities, "activeTasks": tasks})
+            return 0
+
+        if args.cmd == "tasks":
+            portfolio = TaskPortfolio(config.data_dir)
+            _print_json({"active": portfolio.snapshot(), "strategyStats": portfolio.stats_snapshot()})
+            return 0
 
         if args.cmd == "reset":
             state.pressure = reset_cycle(state.pressure, time.time(), config.cycle_ms)
