@@ -101,7 +101,9 @@ class OAuth:
 
     def login(self, agent_name="TimePressure"):
         d = self._load()
-        client = d.get("client_id", "dynamic_agent_client")
+        # OpenAI OSS Sign in with ChatGPT: dynamic_agent_client is only for
+        # first registration; the callback returns the real issued client_id.
+        client = d.get("client_id") or "dynamic_agent_client"
         state = secrets.token_urlsafe(32)
         nonce = secrets.token_urlsafe(32)
         verifier = secrets.token_urlsafe(64)
@@ -156,13 +158,23 @@ class OAuth:
         server.server_close()
 
         result = Handler.result
-        if not result or result.get("state") != state:
+        if not result:
+            raise RuntimeError("ChatGPT OAuth timed out waiting for the browser callback.")
+        if result.get("state") != state:
             raise RuntimeError("OAuth state validation failed.")
         if result.get("error"):
             raise RuntimeError(result.get("error_description", result["error"]))
 
         code = result.get("code")
-        issued_client = result.get("client_id") or client
+        callback_client = result.get("client_id")
+        if client == "dynamic_agent_client":
+            if not callback_client:
+                raise RuntimeError("ChatGPT OAuth registration did not return an issued client_id.")
+            issued_client = callback_client
+        else:
+            if callback_client and callback_client != client:
+                raise RuntimeError("ChatGPT OAuth returned an unexpected client_id.")
+            issued_client = client
         if not code:
             raise RuntimeError("OAuth callback did not contain a code.")
 
@@ -185,9 +197,11 @@ class OAuth:
         if not token.get("access_token") or not token.get("id_token"):
             raise RuntimeError("OpenAI OAuth token exchange did not return the required credentials.")
 
-        scopes = token.get("scope", "").split()
-        if "chatgpt.tokens.use.direct" not in scopes:
-            raise RuntimeError("ChatGPT plan usage permission was not granted.")
+        granted_scopes = set(token.get("scope", "").split())
+        if "chatgpt.tokens.use.direct" not in granted_scopes:
+            raise RuntimeError(
+                "ChatGPT account connected, but ChatGPT plan usage permission was not granted."
+            )
 
         identity = self._verify(token["id_token"], issued_client, nonce)
         d.update({
@@ -207,4 +221,9 @@ class OAuth:
         return d
 
     def connected(self):
-        return bool(self._load().get("access_token"))
+        d = self._load()
+        return bool(
+            d.get("access_token")
+            and d.get("client_id")
+            and "chatgpt.tokens.use.direct" in set(d.get("scope", "").split())
+        )
