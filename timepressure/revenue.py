@@ -72,12 +72,14 @@ def score_revenue_opportunity(item) -> dict:
     }
 
 
-def rank_opportunities(items, minimum_probability=0.15):
+def rank_opportunities(items, minimum_probability=0.15, max_minutes=60):
     scored = []
     for item in items:
         if item.status not in ("candidate", "queued"):
             continue
         if item.probability < minimum_probability:
+            continue
+        if max_minutes is not None and int(item.estimated_minutes) > int(max_minutes):
             continue
         scored.append((score_revenue_opportunity(item)["score"], item))
     scored.sort(key=lambda x: x[0], reverse=True)
@@ -85,7 +87,7 @@ def rank_opportunities(items, minimum_probability=0.15):
 
 
 def select_next_opportunity(items):
-    ranked = rank_opportunities(items)
+    ranked = rank_opportunities(items, max_minutes=60)
     if not ranked:
         return None
     item = ranked[0]
