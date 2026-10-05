@@ -50,14 +50,14 @@ This is a strategy database, not a guarantee of income. A strategy becomes reven
 
 ## Survival rule
 
-Default target: USD 0.10 per hour.
+Default target: USD 0.10 per hour. Pressure is nonlinear by default: urgency accelerates as the deadline approaches, with a configurable multiplier (`TIMEPRESSURE_PRESSURE_MULTIPLIER`, default `1.5`, capped at `3.0`). The agent can also run up to fifteen independent safe actions concurrently, and the red-zone trigger forces a narrower, time-to-value-focused decision mode at very high pressure.
 
 If the target is reached, the cycle resets. If the deadline passes first, the agent becomes dead and must be reset explicitly.
 
 ~~~text
 TIMEPRESSURE_TARGET_CENTS=10
 TIMEPRESSURE_CYCLE_MS=3600000
-TIMEPRESSURE_TICK_MS=10000
+TIMEPRESSURE_TICK_MS=10000\nTIMEPRESSURE_PRESSURE_MULTIPLIER=1.5\nTIMEPRESSURE_IDLE_TICK_THRESHOLD=3
 ~~~
 
 ## AI provider
