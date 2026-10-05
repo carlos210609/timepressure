@@ -17,7 +17,7 @@ class Browser:
         try:
             from playwright.sync_api import sync_playwright
             self._pw = sync_playwright().start()
-            profile = Path(config.data_dir).resolve() / "browser-profile"
+            profile = Path(config.data_dir).resolve() / f"browser-profile-{uuid.uuid4().hex}"
             profile.mkdir(parents=True, exist_ok=True)
             try:
                 profile.chmod(0o700)
