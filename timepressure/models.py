@@ -168,6 +168,10 @@ class Config:
     model: str
     api_key: str | None
     base_url: str
+    ai_provider: str
+    nvidia_api_key: str | None
+    nvidia_model: str
+    nvidia_base_url: str
     allow_network: bool
     browser_enabled: bool
     browser_headless: bool
