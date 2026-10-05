@@ -15,7 +15,26 @@ def _run(cmd):
     return subprocess.run(cmd, check=True)
 
 
+def _ensure_pip():
+    if importlib.util.find_spec("pip") is not None:
+        return True
+    print("[TimePressure] pip is missing; bootstrapping with ensurepip...", flush=True)
+    try:
+        _run([sys.executable, "-m", "ensurepip", "--upgrade", "--user"])
+    except subprocess.CalledProcessError:
+        try:
+            _run([sys.executable, "-m", "ensurepip", "--upgrade"])
+        except subprocess.CalledProcessError:
+            return False
+    return importlib.util.find_spec("pip") is not None
+
+
 def _pip_install():
+    if not _ensure_pip():
+        raise RuntimeError(
+            "Python pip is unavailable and ensurepip is disabled. "
+            "Install the OS package python3-pip, then rerun TimePressure."
+        )
     missing = []
     if importlib.util.find_spec("jwt") is None:
         missing.append(REQUIREMENTS[0])
