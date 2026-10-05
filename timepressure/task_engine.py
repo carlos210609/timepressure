@@ -55,9 +55,9 @@ class TaskPortfolio:
         if changed:
             self.save()
 
-    def sync(self, candidates, max_active=6):
+    def sync(self, candidates, max_active=15):
         self._expire_stale()
-        max_active = min(max(1, int(max_active)), 6)
+        max_active = min(max(1, int(max_active)), 15)
         active = self._active()
         existing = {x.get("strategy") for x in active}
         for candidate in candidates:
@@ -83,7 +83,7 @@ class TaskPortfolio:
         self.save()
         return self._active()
 
-    def add_opportunities(self, opportunities, max_active=6):
+    def add_opportunities(self, opportunities, max_active=15):
         self._expire_stale()
         max_active = min(max(1, int(max_active)), 6)
         active = self._active()
@@ -128,6 +128,25 @@ class TaskPortfolio:
         task["startedAt"] = time.time()
         self.save()
         return task
+
+    def claim_many(self, limit=15):
+        """Mark up to 15 queued tasks as running before concurrent execution."""
+        self._expire_stale()
+        limit = min(max(1, int(limit)), 15)
+        queued = [
+            x for x in self.tasks
+            if x.get("status") == "queued" and x.get("attempts", 0) < MAX_TASK_ATTEMPTS
+        ]
+        queued.sort(key=lambda x: x.get("score", 0), reverse=True)
+        claimed = []
+        for task in queued[:limit]:
+            task["status"] = "running"
+            task["attempts"] = task.get("attempts", 0) + 1
+            task["startedAt"] = time.time()
+            claimed.append(task)
+        if claimed:
+            self.save()
+        return claimed
 
     def finish(self, task_id, status="completed", error=None):
         for task in self.tasks:
