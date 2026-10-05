@@ -30,6 +30,7 @@ def _status_payload(state, config):
         "deadline": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(p.deadline)),
         "nvidia": bool(config.nvidia_api_key),
         "lastThought": state.last_thought,
+        "traffic": traffic_snapshot(state),
     }
 
 
