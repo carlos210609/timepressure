@@ -94,6 +94,8 @@ class State:
     revenue_opportunities: list[dict] = field(default_factory=list)
     revenue_attempts: list[dict] = field(default_factory=list)
     revenue_cost_cents: int = 0
+    # Persistent decision state prevents strategy thrashing between ticks.
+    decision: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self):
         return {
@@ -124,6 +126,7 @@ class State:
             "revenueOpportunities": self.revenue_opportunities[-100:],
             "revenueAttempts": self.revenue_attempts[-100:],
             "revenueCostCents": self.revenue_cost_cents,
+            "decision": self.decision,
         }
 
     @classmethod
@@ -177,6 +180,7 @@ class State:
             list(d.get("revenueOpportunities", [])),
             list(d.get("revenueAttempts", [])),
             int(d.get("revenueCostCents", 0)),
+            dict(d.get("decision", {})),
         )
 
 
