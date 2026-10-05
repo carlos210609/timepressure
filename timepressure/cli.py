@@ -16,7 +16,7 @@ from .task_engine import TaskPortfolio
 from .security import security_snapshot
 
 
-def _status_payload(state, oauth):
+def _status_payload(state, config):
     now = time.time()
     state.pressure = calculate_pressure(now, state.pressure)
     p = state.pressure
@@ -27,7 +27,7 @@ def _status_payload(state, oauth):
         "targetUsd": round(p.target_cents / 100, 2),
         "secondsLeft": max(0, int(p.deadline - now)),
         "deadline": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(p.deadline)),
-        "chatgpt": oauth.connected(),
+        "nvidia": bool(config.nvidia_api_key),
         "lastThought": state.last_thought,
     }
 
@@ -137,10 +137,8 @@ def main(argv=None):
 
     try:
         if args.cmd in ("status", "pressure"):
-            from .oauth import OAuth
-            oauth = OAuth()
             if not getattr(args, "watch", False):
-                _print_json(_status_payload(state, oauth))
+                _print_json(_status_payload(state, config))
                 return 0
             while True:
                 print("\033[2J\033[H", end="")
