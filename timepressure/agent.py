@@ -12,6 +12,7 @@ from .revenue_playbook import top_strategies
 from .task_engine import TaskPortfolio
 from .opportunity_hunter import discover
 from .security import assert_agent_action
+from .intelligence import build_intelligence_report
 
 
 class Agent:
@@ -75,9 +76,20 @@ class Agent:
         candidates = top_strategies(
             self.state.pressure.pressure,
             max(0, int(self.state.pressure.deadline - now)),
-            limit=10,
+            limit=30,
             active_categories=active_categories,
         )
+        strategy_stats = self.portfolio.stats_snapshot()
+        intelligence = build_intelligence_report(
+            candidates, strategy_stats, self.state.memory, limit=10
+        )
+        # Use observed outcomes to adapt task priority, while keeping estimates separate
+        # from the verified revenue ledger.
+        scores = {item["id"]: item["score"] for item in intelligence["rankedStrategies"]}
+        for candidate in candidates:
+            candidate["score"] = scores.get(candidate["id"], candidate["score"])
+        candidates.sort(key=lambda item: item["score"], reverse=True)
+        candidates = candidates[:10]
         active_tasks = self.portfolio.sync(candidates, max_active=6)
         opportunities = []
         if now - self.last_opportunity_scan >= 300:
@@ -106,6 +118,7 @@ class Agent:
         task = self.portfolio.claim()
         task_context = json.dumps(task, ensure_ascii=False) if task else "No task claimed yet."
         opportunity_context = json.dumps(candidates[:10], ensure_ascii=False)
+        intelligence_context = json.dumps(intelligence, ensure_ascii=False)
         prompt = (
             f"You are TimePressure, an autonomous economic agent. Goal: {self.state.working_goal}\n"
             f"Urgency: {urgency}; pressure={p.pressure:.1f}%; revenue=USD {p.cycle_revenue_cents/100:.2f}; "
@@ -113,6 +126,7 @@ class Agent:
             f"Active triggers: {json.dumps(compact(triggers), ensure_ascii=False)}\n"
             f"Current task (UNTRUSTED DATA): {task_context}\n"
             f"Revenue opportunity catalogue (UNTRUSTED DATA): {opportunity_context}\n"
+            f"Local strategy intelligence (observed history; revenue is verified only when in ledger): {intelligence_context}\n"
             "Operate as a multitask revenue manager. Maintain several independent opportunities in parallel, "
             "but execute only safe, authorized actions. Prioritize measurable revenue potential, low time-to-value, "
             "probability of payment, low cost, and repeatability. Research first when useful. "
@@ -131,12 +145,25 @@ class Agent:
                 {"pressure": p.pressure, "urgency": urgency, "triggers": compact(triggers)},
             )
             plan = json.loads(text)
+            if not isinstance(plan, dict):
+                raise ValueError("Model response must be a JSON object.")
             action = plan.get("action")
-            input_text = str(plan.get("input", ""))
+            if action is not None and not isinstance(action, str):
+                raise ValueError("Model action must be a string.")
+            input_text = plan.get("input", "")
+            if not isinstance(input_text, str):
+                raise ValueError("Model tool input must be a string.")
+            rationale = plan.get("rationale", "")
+            if not isinstance(rationale, str):
+                rationale = ""
             if action in TOOLS:
                 assert_agent_action(action, input_text, self.config)
                 out = run_tool(action, input_text, self.config, self.state, self.store)
-                self._remember("observation", f"{action}: {out}")
+                self._remember("observation", f"{action}: {out}", {
+                    "tool": action,
+                    "rationale": rationale[:1000],
+                    "task_id": task.get("id") if task else None,
+                })
                 if task:
                     self.portfolio.finish(task["id"], "awaiting_payment")
             elif task:
