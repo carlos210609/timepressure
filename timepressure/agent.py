@@ -107,7 +107,7 @@ class Agent:
         )
         strategy_stats = self.portfolio.stats_snapshot()
         intelligence = build_intelligence_report(
-            candidates, strategy_stats, self.state.memory, limit=10
+            candidates, strategy_stats, self.state.memory, limit=15
         )
         # Use observed outcomes to adapt task priority, while keeping estimates separate
         # from the verified revenue ledger.
@@ -115,7 +115,7 @@ class Agent:
         for candidate in candidates:
             candidate["score"] = scores.get(candidate["id"], candidate["score"])
         candidates.sort(key=lambda item: item["score"], reverse=True)
-        candidates = candidates[:10]
+        candidates = candidates[:15]
         active_tasks = self.portfolio.sync(candidates, max_active=15)
         opportunities = []
         if now - self.last_opportunity_scan >= 300:
