@@ -1,13 +1,15 @@
 """Persistent multitask portfolio and lightweight strategy learning."""
-
 import json
 import time
 from pathlib import Path
+
+from .security import MAX_TASK_ATTEMPTS, task_is_expired
 
 
 class TaskPortfolio:
     def __init__(self, data_dir):
         root = Path(data_dir).expanduser().resolve()
+        root.mkdir(parents=True, exist_ok=True)
         self.path = root / "tasks.json"
         self.stats_path = root / "strategy_stats.json"
         self.tasks = self._load(self.path, [])
@@ -41,7 +43,21 @@ class TaskPortfolio:
     def _active(self):
         return [x for x in self.tasks if x.get("status") in {"queued", "running", "awaiting_payment"}]
 
+    def _expire_stale(self):
+        changed = False
+        for task in self._active():
+            if task_is_expired(task):
+                task["status"] = "failed"
+                task["finishedAt"] = time.time()
+                task["lastError"] = "Task expired by security policy."
+                self._learn(task, "failed")
+                changed = True
+        if changed:
+            self.save()
+
     def sync(self, candidates, max_active=6):
+        self._expire_stale()
+        max_active = min(max(1, int(max_active)), 6)
         active = self._active()
         existing = {x.get("strategy") for x in active}
         for candidate in candidates:
@@ -68,6 +84,8 @@ class TaskPortfolio:
         return self._active()
 
     def add_opportunities(self, opportunities, max_active=6):
+        self._expire_stale()
+        max_active = min(max(1, int(max_active)), 6)
         active = self._active()
         existing = {x.get("externalId") for x in active}
         for item in opportunities:
@@ -97,7 +115,11 @@ class TaskPortfolio:
         return self._active()
 
     def claim(self):
-        queued = [x for x in self.tasks if x.get("status") == "queued"]
+        self._expire_stale()
+        queued = [
+            x for x in self.tasks
+            if x.get("status") == "queued" and x.get("attempts", 0) < MAX_TASK_ATTEMPTS
+        ]
         if not queued:
             return None
         task = max(queued, key=lambda x: x.get("score", 0))
@@ -110,6 +132,9 @@ class TaskPortfolio:
     def finish(self, task_id, status="completed", error=None):
         for task in self.tasks:
             if task.get("id") == task_id:
+                if status == "queued" and task.get("attempts", 0) >= MAX_TASK_ATTEMPTS:
+                    status = "failed"
+                    error = error or "Maximum task attempts reached."
                 task["status"] = status
                 task["finishedAt"] = time.time()
                 task["lastError"] = error
@@ -132,6 +157,7 @@ class TaskPortfolio:
         self.save()
 
     def snapshot(self):
+        self._expire_stale()
         return self._active()
 
     def stats_snapshot(self):
