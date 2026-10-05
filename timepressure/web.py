@@ -5,6 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse
 from .social import social_snapshot
 from .agent import Agent
+from .chat_controls import parse_pressure_command, pressure_status
 
 from .pressure import calculate_pressure
 from .traffic import traffic_snapshot
@@ -98,7 +99,7 @@ def _local_ip():
 
 
 def dashboard_payload(state, config):
-    state.pressure = calculate_pressure(time.time(), state.pressure)
+    state.pressure = calculate_pressure(time.time(), state.pressure, config.pressure_multiplier)
     return {
         "version": state.version,
         "status": state.pressure.status,
@@ -109,6 +110,7 @@ def dashboard_payload(state, config):
         "deadline": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(state.pressure.deadline)),
         "chatgpt": False,
         "model": config.model,
+        "pressureMultiplier": config.pressure_multiplier,
         "plan": state.working_plan,
         "lastThought": state.last_thought,
         "revenue": [vars(x) for x in state.revenue[-100:]],
@@ -148,6 +150,13 @@ def serve(config, store, state, host=None, port=8787):
                 try:
                     body = json.loads(self.rfile.read(length) or b"{}")
                     message = str(body.get("message", "")).strip()
+                    pressure_command = parse_pressure_command(message, config.pressure_multiplier)
+                    if pressure_command is not None:
+                        config.pressure_multiplier = pressure_command
+                        self._send(200, "application/json; charset=utf-8", json.dumps({
+                            "reply": f"Feito. {pressure_status(config.pressure_multiplier)}"
+                        }, ensure_ascii=False))
+                        return
                     history = body.get("history", [])
                     if not message or len(message) > 4000:
                         raise ValueError("Message must contain 1-4000 characters.")
