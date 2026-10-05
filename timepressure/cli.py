@@ -168,21 +168,6 @@ def main(argv=None):
             })
             return 0
 
-        if args.cmd == "auth":
-            from .oauth import OAuth
-            oauth = OAuth()
-            if args.sub == "login":
-                print("Opening ChatGPT login in your browser...")
-                oauth.login()
-                print("✓ ChatGPT connected.")
-                return 0
-            if args.sub == "logout":
-                oauth.logout()
-                print("✓ ChatGPT credentials removed.")
-                return 0
-            if args.sub == "status":
-                _print_json({"connected": oauth.connected(), "credentialFile": str(oauth.path)})
-                return 0
 
         if args.cmd == "hunt":
             opportunities = discover(config, limit=12)
