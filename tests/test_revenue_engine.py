@@ -32,6 +32,24 @@ class TaskPortfolioTests(unittest.TestCase):
             portfolio.finish(tasks[0]["id"], "completed")
             self.assertEqual(portfolio.stats_snapshot()["test"]["successes"], 1)
 
+    def test_task_attempt_limit(self):
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            portfolio = TaskPortfolio(tmp)
+            tasks = portfolio.add_opportunities([{
+                "id": "x:attempts", "source": "test", "title": "Retry limit",
+                "url": "https://example.com", "rewardUsd": 1, "score": 1,
+                "instruction": "Inspect only.",
+            }], max_active=1)
+            task_id = tasks[0]["id"]
+            for _ in range(3):
+                task = portfolio.claim()
+                self.assertEqual(task["id"], task_id)
+                portfolio.finish(task_id, "queued", "temporary failure")
+            self.assertIsNone(portfolio.claim())
+            self.assertEqual(portfolio.stats_snapshot()["test"]["failures"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
