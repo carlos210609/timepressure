@@ -86,6 +86,8 @@ class State:
     browser_history: list[BrowserEvent] = field(default_factory=list)
     traffic: TrafficState | None = None
     traffic_events: list[TrafficEvent] = field(default_factory=list)
+    social_accounts: list[Any] = field(default_factory=list)
+    social_posts: list[Any] = field(default_factory=list)
     working_goal: str = "Generate legitimate value and record verified revenue."
     working_plan: list[str] = field(default_factory=list)
     last_thought: str | None = None
@@ -109,6 +111,8 @@ class State:
             "browserHistory": [vars(x) for x in self.browser_history[-200:]],
             "traffic": vars(self.traffic) if self.traffic else None,
             "trafficEvents": [vars(x) for x in self.traffic_events[-5000:]],
+            "socialAccounts": [vars(x) for x in self.social_accounts],
+            "socialPosts": [vars(x) for x in self.social_posts[-5000:]],
             "working": {
                 "goal": self.working_goal,
                 "plan": self.working_plan,
@@ -128,6 +132,7 @@ class State:
             float(p["deadline"]),
             p.get("lastRevenueAt"),
         )
+        from .social import SocialAccount, SocialPost
         return cls(
             int(d.get("version", 1)),
             float(d.get("createdAt", pressure.cycle_started_at)),
@@ -182,6 +187,8 @@ class State:
             d.get("working", {}).get("lastThought"),
             TrafficState(**d["traffic"]) if d.get("traffic") else None,
             [TrafficEvent(x["id"], int(x["visits"]), x["source"], x["reference"], float(x["timestamp"])) for x in d.get("trafficEvents", [])],
+            [SocialAccount(**x) for x in d.get("socialAccounts", [])],
+            [SocialPost(**x) for x in d.get("socialPosts", [])],
         )
 
 
