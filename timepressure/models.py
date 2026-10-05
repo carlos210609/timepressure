@@ -188,3 +188,5 @@ class Config:
     temp_email_target_domains: list[str]
     temp_email_provider_domains: list[str]
     temp_email_providers: list[dict[str, str]]
+    pressure_multiplier: float = 1.5
+    idle_tick_threshold: int = 3
