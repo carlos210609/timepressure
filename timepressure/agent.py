@@ -97,6 +97,8 @@ class Agent:
             f"Urgency: {urgency}; pressure={p.pressure:.1f}%; revenue=USD {p.cycle_revenue_cents/100:.2f}; "
             f"target=USD {p.target_cents/100:.2f}; seconds_left={max(0,int(p.deadline-now))}.\n"
             f"Active triggers: {json.dumps(compact(triggers), ensure_ascii=False)}\n"
+            f"Current task: {task_context}\n"
+            f"Revenue opportunity catalogue: {opportunity_context}\n"
             "Operate as a multitask revenue manager. Maintain several independent opportunities in parallel, "
             "but execute only safe, authorized actions. Prioritize measurable revenue potential, low time-to-value, "
             "probability of payment, low cost, and repeatability. Research first when useful. "
