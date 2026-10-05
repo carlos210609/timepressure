@@ -112,7 +112,7 @@ def dashboard_payload(state, config):
     }
 
 
-def serve(config, store, state, host="0.0.0.0", port=8787):
+def serve(config, store, state, host=None, port=8787):
     from .oauth import OAuth
     oauth = OAuth()
 
@@ -141,7 +141,8 @@ def serve(config, store, state, host="0.0.0.0", port=8787):
         def log_message(self, *_args):
             pass
 
-    server = ThreadingHTTPServer((host, port), Handler)
+    bind_host = host or _local_ip()
+    server = ThreadingHTTPServer((bind_host, port), Handler)
     print(f"TimePressure Control: http://{_local_ip()}:{port}")
     print(f"Local: http://127.0.0.1:{port}")
     print("Press Ctrl+C to stop.")
