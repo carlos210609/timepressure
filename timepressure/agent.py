@@ -177,7 +177,7 @@ class Agent:
                 raise ValueError("Model response must contain an actions array.")
             actions = actions[:15]
 
-            def execute(item):
+            def execute(index, item):
                 if not isinstance(item, dict):
                     raise ValueError("Each action must be an object.")
                 action = item.get("action")
@@ -190,26 +190,26 @@ class Agent:
                 if action == "none":
                     return action, input_text, rationale, "skipped"
                 assert_agent_action(action, input_text, self.config)
-                return action, input_text, rationale, run_tool(action, input_text, self.config, self.state, self.store)
+                return index, action, input_text, rationale, run_tool(action, input_text, self.config, self.state, self.store)
 
             results = []
             with ThreadPoolExecutor(max_workers=min(15, max(1, len(actions)))) as pool:
-                futures = [pool.submit(execute, item) for item in actions]
+                futures = [pool.submit(execute, index, item) for index, item in enumerate(actions)]
                 for future in as_completed(futures):
                     try:
                         results.append((True, *future.result()))
                     except Exception as exc:
-                        results.append((False, "", "", str(exc)))
+                        results.append((False, -1, "", "", str(exc)))
 
-            for index, (ok, action, input_text, rationale, out) in enumerate(results):
+            for ok, action_index, action, rationale, out in results:
                 if ok:
-                    self._remember("observation", f"{action}: {out}", {"tool": action, "rationale": rationale[:1000], "task_id": tasks[index]["id"] if index < len(tasks) else None})
-                    if index < len(tasks):
-                        self.portfolio.finish(tasks[index]["id"], "awaiting_payment")
+                    self._remember("observation", f"{action}: {out}", {"tool": action, "rationale": rationale[:1000], "task_id": tasks[action_index]["id"] if 0 <= action_index < len(tasks) else None})
+                    if 0 <= action_index < len(tasks):
+                        self.portfolio.finish(tasks[action_index]["id"], "awaiting_payment")
                 else:
                     self._remember("security_or_runtime_error", out)
-                    if index < len(tasks):
-                        self.portfolio.finish(tasks[index]["id"], "queued", out)
+                    if 0 <= action_index < len(tasks):
+                        self.portfolio.finish(tasks[action_index]["id"], "queued", out)
         except Exception as exc:
             for task in tasks:
                 self.portfolio.finish(task["id"], "queued", str(exc))
