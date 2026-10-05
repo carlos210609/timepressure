@@ -6,6 +6,10 @@ from pathlib import Path
 from .security import MAX_TASK_ATTEMPTS, task_is_expired
 
 
+MAX_ATTEMPTS = 3
+TASK_TTL_SECONDS = 24 * 60 * 60
+
+
 class TaskPortfolio:
     def __init__(self, data_dir):
         root = Path(data_dir).expanduser().resolve()
@@ -41,7 +45,25 @@ class TaskPortfolio:
         self._write(self.stats_path, self.stats)
 
     def _active(self):
-        return [x for x in self.tasks if x.get("status") in {"queued", "running", "awaiting_payment"}]
+        now = time.time()
+        active = []
+        changed = False
+        for task in self.tasks:
+            if task.get("status") in {"queued", "running", "awaiting_payment"}:
+                if now - float(task.get("createdAt", now)) > TASK_TTL_SECONDS:
+                    task["status"] = "expired"
+                    task["finishedAt"] = now
+                    changed = True
+                elif task.get("attempts", 0) >= MAX_ATTEMPTS:
+                    task["status"] = "failed"
+                    task["finishedAt"] = now
+                    task["lastError"] = "Maximum task attempts reached."
+                    changed = True
+                else:
+                    active.append(task)
+        if changed:
+            self.save()
+        return active
 
     def _expire_stale(self):
         changed = False
