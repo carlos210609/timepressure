@@ -35,7 +35,9 @@ timepressure status --watch
 timepressure run
 timepressure run --once
 timepressure reset
-timepressure revenue add 0.10 --source verified-source
+timepressure hunt
+timepressure tasks
+timepressure revenue add 0.10 --source verified-source --strategy website_audit
 timepressure browser open https://example.com
 timepressure wallet balance
 ~~~
@@ -46,9 +48,9 @@ No command starts a desktop interface.
 
 TimePressure includes a built-in revenue strategy playbook covering product, SaaS, APIs, development, research, SEO, data, content, education, recurring services, affiliate/referral programs, authorized security bounties, open-source bounties, marketplaces, integrations, monitoring and AI workflows.
 
-The multitask engine ranks opportunities using pressure, time-to-value, expected value, automation potential, repeatability and category diversity. It maintains a persistent portfolio of up to six active opportunities in `.data/tasks.json` and chooses the highest-priority safe task on each agent tick.
+The multitask engine ranks opportunities using pressure, time-to-value, expected value, automation potential, repeatability and category diversity. It maintains a persistent portfolio of up to six active opportunities in `.data/tasks.json` and chooses the highest-priority safe task on each agent tick. `timepressure hunt` also discovers public bounty opportunities and queues them without submitting work or spending money. `timepressure tasks` exposes the active portfolio and learned strategy statistics in `.data/strategy_stats.json`.
 
-This is a strategy database, not a guarantee of income. A strategy becomes revenue only after a legitimate payment is actually verified.
+This is a strategy database, not a guarantee of income. A strategy becomes revenue only after a legitimate payment is actually verified. The learning loop should be fed with verified revenue using `--strategy`; failed/completed task outcomes are also retained so future prioritization can improve.
 
 ## Survival rule
 
@@ -84,7 +86,7 @@ Litecoin Core RPC is optional. The runtime never requests or stores wallet seeds
 
 ## Security
 
-Revenue entries are accounting records and do not prove earnings. Shell execution is disabled by default. Network access can be disabled. Financial or irreversible actions require human review.
+Revenue entries are accounting records and do not prove earnings. Opportunity discovery is intentionally read-only: it can find public leads, but it does not automatically claim bounties, submit applications, contact strangers, or move money. Shell execution is disabled by default. Network access can be disabled. Financial or irreversible actions require human review.
 
 ## Tests
 
