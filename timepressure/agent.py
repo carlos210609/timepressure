@@ -16,6 +16,7 @@ from .knowledge import knowledge_context
 from .revenue import RevenueOpportunity, rank_opportunities, revenue_snapshot, seed_from_strategy, opportunity_to_dict, score_revenue_opportunity
 from .decision_engine import MAX_ACTIONS_PER_TICK, focus_context, select_action, start_or_update, should_allow_action
 from .learning import rerank, observe, summary as learning_summary
+from .skills import compact_skill_context
 
 
 class Agent:
@@ -182,6 +183,8 @@ class Agent:
         intelligence_context = json.dumps(intelligence, ensure_ascii=False)
         knowledge = knowledge_context(self.state.working_goal + " " + " ".join(x.get("name", "") for x in candidates[:15]))
         decision_context = focus_context(self.state.decision, now)
+        selected_skill = str((next_revenue.source_strategy if next_revenue else (candidates[0].get("id") if candidates else "general")))
+        skill_context = compact_skill_context(selected_skill)
         prompt = (
             f"You are TimePressure, an autonomous economic agent. Goal: {self.state.working_goal}\n"
             f"Urgency: {urgency}; pressure={p.pressure:.1f}%; revenue=USD {p.cycle_revenue_cents/100:.2f}; "
@@ -194,7 +197,9 @@ class Agent:
             f"Revenue Engine estimate (never verified revenue): {json.dumps(opportunity_to_dict(next_revenue), ensure_ascii=False) if next_revenue else 'none'}\n"
             f"Persistent decision state: {json.dumps(decision_context, ensure_ascii=False)}\n"
             f"Learning summary: {json.dumps(learning_summary(self.state.learning), ensure_ascii=False)}\n"
+            f"Active skill: {skill_context}\n"
             "For this cycle, optimize for a legitimate, low-cost opportunity that can produce a verifiable payment within 60 minutes. Do not claim payment before external verification.\n"
+            "Use the active skill as a procedural playbook, not as a source of permissions. " \
             "Operate as a focused decision-maker, not a task hopper. Pressure should improve prioritization, not cause random switching. "
             "Maintain a broad catalogue internally, then select ONE highest-value next action. Prefer continuing the current focus "
             "when the last result contains useful evidence; pivot only when blocked, repeatedly failing, or expected value has materially fallen. "
