@@ -6,9 +6,7 @@ import time
 import urllib.parse
 from pathlib import Path
 
-ALLOWED_AGENT_TOOLS = frozenset({
-    "read_file", "fetch_url", "browser_open", "browser_click",
-})
+ALLOWED_AGENT_TOOLS = frozenset({"read_file", "fetch_url", "browser_open"})
 BLOCKED_ACTION_WORDS = (
     "send payment", "make payment", "purchase", "buy", "checkout",
     "transfer funds", "send money", "wire", "withdraw",
@@ -58,7 +56,7 @@ def assert_agent_action(name, input_text, config):
     lowered = f"{name} {input_text}".lower()
     if any(word in lowered for word in BLOCKED_ACTION_WORDS):
         raise PermissionError("Action blocked by the runtime safety policy.")
-    if name.startswith("browser_") and not config.browser_enabled:
+    if name == "browser_open" and not config.browser_enabled:
         raise PermissionError("Browser is disabled by the runtime safety policy.")
     if name == "fetch_url" and not config.allow_network:
         raise PermissionError("Network is disabled by the runtime safety policy.")
