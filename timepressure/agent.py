@@ -52,9 +52,8 @@ class Agent:
             raise RuntimeError("NVIDIA model response did not contain output text.")
         return content
     def _ask_model(self, prompt):
-        if True:
-            return self._ask_nvidia(prompt)
-        token = self.oauth.access_token() or self.config.api_key
+        return self._ask_nvidia(prompt)
+        token = None
         if not token:
             raise RuntimeError("Connect ChatGPT with OAuth or configure OPENAI_API_KEY.")
         payload = json.dumps({
@@ -133,8 +132,8 @@ class Agent:
         )
         if self.state.pressure.status == "dead":
             return
-        if not (self.oauth.connected() or self.config.api_key or self.config.nvidia_api_key):
-            message = "AI connection required: connect ChatGPT, configure OPENAI_API_KEY, or configure NVIDIA_API_KEY."
+        if not self.config.nvidia_api_key:
+            message = "NVIDIA AI connection required: configure NVIDIA_API_KEY."
             self._remember("security_or_runtime_error", message)
             raise RuntimeError(message)
 
