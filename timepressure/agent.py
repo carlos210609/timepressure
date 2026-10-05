@@ -42,7 +42,7 @@ class Agent:
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0.2,
-            "max_tokens": 2048,
+            "max_tokens": 768,
             "stream": False,
         }).encode()
         base = self.config.nvidia_base_url.rstrip("/")
@@ -50,7 +50,7 @@ class Agent:
             base += "/v1"
         headers = {"Content-Type": "application/json", chr(65) + "uthorization": chr(66) + "earer " + token}
         req = urllib.request.Request(base + "/chat/completions", payload, headers)
-        with urllib.request.urlopen(req, timeout=60) as response:
+        with urllib.request.urlopen(req, timeout=20) as response:
             data = json.loads(response.read())
         content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
         if not content:
@@ -105,12 +105,12 @@ class Agent:
         candidates = top_strategies(
             self.state.pressure.pressure,
             max(0, int(self.state.pressure.deadline - now)),
-            limit=30,
+            limit=12,
             active_categories=active_categories,
         )
         strategy_stats = self.portfolio.stats_snapshot()
         intelligence = build_intelligence_report(
-            candidates, strategy_stats, self.state.memory, limit=15
+            candidates, strategy_stats, self.state.memory, limit=6
         )
         # Use observed outcomes to adapt task priority, while keeping estimates separate
         # from the verified revenue ledger.
@@ -118,13 +118,13 @@ class Agent:
         for candidate in candidates:
             candidate["score"] = scores.get(candidate["id"], candidate["score"])
         candidates = rerank(candidates, self.state.learning)
-        candidates = candidates[:15]
-        active_tasks = self.portfolio.sync(candidates, max_active=15)
+        candidates = candidates[:8]
+        active_tasks = self.portfolio.sync(candidates, max_active=8)
 
         # Revenue Engine: estimates are kept separate from the verified ledger.
-        if now - self.last_revenue_engine_scan >= 300:
+        if now - self.last_revenue_engine_scan >= 900:
             existing = {x.get("sourceStrategy") for x in self.state.revenue_opportunities}
-            for strategy in candidates[:15]:
+            for strategy in candidates[:8]:
                 if strategy.get("id") not in existing:
                     opportunity = seed_from_strategy(strategy)
                     data = opportunity_to_dict(opportunity)
@@ -141,7 +141,7 @@ class Agent:
                 opportunity_objects.append(RevenueOpportunity(**fields))
             except (KeyError, TypeError, ValueError):
                 continue
-        ranked_revenue = rank_opportunities(opportunity_objects)
+        ranked_revenue = rank_opportunities(opportunity_objects, max_minutes=60)
         for item in ranked_revenue:
             for raw in self.state.revenue_opportunities:
                 if raw.get("id") == item.id:
@@ -149,15 +149,15 @@ class Agent:
                     break
         next_revenue = ranked_revenue[0] if ranked_revenue else None
         opportunities = []
-        if now - self.last_opportunity_scan >= 300:
-            opportunities = discover(self.config, limit=12)
+        if now - self.last_opportunity_scan >= 900:
+            opportunities = discover(self.config, limit=5)
             self.last_opportunity_scan = now
             if opportunities:
-                active_tasks = self.portfolio.add_opportunities(opportunities, max_active=15)
+                active_tasks = self.portfolio.add_opportunities(opportunities, max_active=8)
         # The one-hour objective favors opportunities that can realistically complete within 60 minutes.
         ranked_revenue = [x for x in ranked_revenue if int(x.estimated_minutes) <= 60] or ranked_revenue
         self.state.working_plan = [
-            f"{x['name']}: {x['instruction']}" for x in active_tasks[:15]
+            f"{x['name']}: {x['instruction']}" for x in active_tasks[:8]
         ]
         if next_revenue:
             self.state.working_plan.insert(0, f"Revenue Engine: validate {next_revenue.title} | score={score_revenue_opportunity(next_revenue)['score']}")
@@ -178,7 +178,7 @@ class Agent:
         urgency = "HIGH" if p.status == "critical" else ("MEDIUM" if p.status == "warning" else "LOW")
         tasks = self.portfolio.claim_many(MAX_ACTIONS_PER_TICK)
         task_context = json.dumps(tasks, ensure_ascii=False) if tasks else "No task claimed; the decision engine may choose a direct safe action."
-        opportunity_context = json.dumps(candidates[:15], ensure_ascii=False)
+        opportunity_context = json.dumps(candidates[:8], ensure_ascii=False)
         intelligence_context = json.dumps(intelligence, ensure_ascii=False)
         knowledge = knowledge_context(self.state.working_goal + " " + " ".join(x.get("name", "") for x in candidates[:15]))
         decision_context = focus_context(self.state.decision, now)
