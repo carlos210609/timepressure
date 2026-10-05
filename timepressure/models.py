@@ -47,6 +47,26 @@ class MemoryEvent:
 
 
 @dataclass
+class TrafficState:
+    id: str
+    target_url: str
+    campaign: str
+    target_visits: int
+    verified_visits: int
+    started_at: float
+    status: Literal["active", "completed", "paused"] = "active"
+
+
+@dataclass
+class TrafficEvent:
+    id: str
+    visits: int
+    source: str
+    reference: str
+    timestamp: float
+
+
+@dataclass
 class BrowserEvent:
     id: str
     action: str
@@ -64,6 +84,8 @@ class State:
     payouts: list[PayoutEvent] = field(default_factory=list)
     memory: list[MemoryEvent] = field(default_factory=list)
     browser_history: list[BrowserEvent] = field(default_factory=list)
+    traffic: TrafficState | None = None
+    traffic_events: list[TrafficEvent] = field(default_factory=list)
     working_goal: str = "Generate legitimate value and record verified revenue."
     working_plan: list[str] = field(default_factory=list)
     last_thought: str | None = None
@@ -85,6 +107,8 @@ class State:
             "payouts": [vars(x) for x in self.payouts],
             "memory": [vars(x) for x in self.memory],
             "browserHistory": [vars(x) for x in self.browser_history[-200:]],
+            "traffic": vars(self.traffic) if self.traffic else None,
+            "trafficEvents": [vars(x) for x in self.traffic_events[-5000:]],
             "working": {
                 "goal": self.working_goal,
                 "plan": self.working_plan,
@@ -156,6 +180,8 @@ class State:
             ),
             d.get("working", {}).get("plan", []),
             d.get("working", {}).get("lastThought"),
+            TrafficState(**d["traffic"]) if d.get("traffic") else None,
+            [TrafficEvent(x["id"], int(x["visits"]), x["source"], x["reference"], float(x["timestamp"])) for x in d.get("trafficEvents", [])],
         )
 
 
