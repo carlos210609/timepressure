@@ -16,6 +16,7 @@ from .task_engine import TaskPortfolio
 from .security import security_snapshot
 from .traffic import campaign_url, record_visit, start_campaign, traffic_snapshot
 from .social import approve_post, mark_published, queue_post, record_metrics, register_account, social_snapshot
+from .innovation import intelligence_snapshot
 
 
 def _status_payload(state, config):
@@ -33,6 +34,7 @@ def _status_payload(state, config):
         "lastThought": state.last_thought,
         "traffic": traffic_snapshot(state),
         "social": social_snapshot(state),
+        "intelligence": intelligence_snapshot(state, config),
     }
 
 
@@ -136,7 +138,7 @@ def build_parser():
     sm.add_argument("--visits", type=int, default=0)
 
 
-    revenue = sub.add_parser("revenue", sub.add_parser("revenue", help="Record verified revenue.")
+    revenue = sub.add_parser("revenue", help="Record verified revenue.")
     revenue_sub = revenue.add_subparsers(dest="sub", required=True)
     add = revenue_sub.add_parser("add", help="Add a revenue event to the local ledger.")
     add.add_argument("usd", type=float)
