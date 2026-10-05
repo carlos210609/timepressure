@@ -1,4 +1,3 @@
-import io
 import json
 import unittest
 from types import SimpleNamespace
