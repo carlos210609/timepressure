@@ -52,7 +52,7 @@ class Agent:
             raise RuntimeError("NVIDIA model response did not contain output text.")
         return content
     def _ask_model(self, prompt):
-        if self.config.ai_provider == "nvidia" or (self.config.ai_provider == "auto" and self.config.nvidia_api_key and not (self.oauth.access_token() or self.config.api_key)):
+        if True:
             return self._ask_nvidia(prompt)
         token = self.oauth.access_token() or self.config.api_key
         if not token:
