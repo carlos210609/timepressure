@@ -100,6 +100,7 @@ class State:
     decision: dict[str, Any] = field(default_factory=dict)
     learning: dict[str, Any] = field(default_factory=dict)
     executions: list[dict[str, Any]] = field(default_factory=list)
+    verified_ledger: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self):
         return {
@@ -135,6 +136,7 @@ class State:
             "decision": self.decision,
             "learning": self.learning,
             "executions": self.executions[-200:],
+            "verifiedLedger": self.verified_ledger[-500:],
         }
 
     @classmethod
@@ -193,6 +195,7 @@ class State:
             dict(d.get("decision", {})),
             dict(d.get("learning", {})),
             list(d.get("executions", [])),
+            list(d.get("verifiedLedger", [])),
         )
 
 
