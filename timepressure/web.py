@@ -41,7 +41,7 @@ input,button{font:inherit}input{background:#0b0e12;border:1px solid var(--line);
 <div class="card"><div class="label">AI</div><div class="value" id="ai">—</div><div class="sub" id="model">—</div></div>
 </div>
 
-<div class="card" style="margin-top:12px"><div class="head"><h2>Website target</h2><span class="badge">traffic-only</span></div><div class="target" id="targetUrl">Not configured</div><div class="sub">The engine does not manufacture visits. Only externally verified traffic counts.</div></div>
+<div class="card" style="margin-top:12px"><div class="head"><h2>Website target</h2><span class="badge">traffic-only</span></div><div class="target" id="targetUrl">Not configured</div><div style="display:flex;gap:8px;margin-top:12px"><input id="targetInput" placeholder="https://seusite.com" style="flex:1"><input id="targetVisits" type="number" min="1" value="100" style="width:110px"><button id="startTraffic">Start campaign</button></div><div class="sub">The engine does not manufacture visits. Only externally verified traffic counts.</div><div class="sub" id="trafficFeedback"></div></div>
 
 <div class="section">
 <div class="card"><div class="head"><h2>Growth plan</h2><span class="badge">AI-directed</span></div><div id="plan" class="list"></div></div>
@@ -79,6 +79,7 @@ function render(d){
 }
 async function refresh(){try{const r=await fetch('/api/state',{cache:'no-store'});const d=await r.json();render(d)}catch(e){$('status').textContent='offline'}}
 refresh();setInterval(refresh,3000);
+$('startTraffic').onclick=async()=>{const url=$('targetInput').value.trim();const target=Number($('targetVisits').value||100);if(!url)return $('trafficFeedback').textContent='Enter an HTTPS website.';const r=await fetch('/api/traffic',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,target})});const d=await r.json();$('trafficFeedback').textContent=r.ok?'Campaign started.':(d.error||'Failed');refresh()};
 const slider=$('slider');slider.oninput=()=>{$('sliderValue').textContent=slider.value+'%';$('pressureLabel').textContent=mode(Number(slider.value))};
 $('apply').onclick=async()=>{const r=await fetch('/api/pressure',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({intensity:Number(slider.value)})});const d=await r.json();$('feedback').textContent=r.ok?'Applied: '+d.multiplier.toFixed(2)+'× multiplier':(d.error||'Failed')};
 $('chatForm').onsubmit=async e=>{e.preventDefault();const input=$('chatInput'),m=input.value.trim();if(!m)return;input.value='';$('chat').innerHTML+='<div class="item"><b>Você</b><small>'+esc(m)+'</small></div>';const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:m})});const d=await r.json();$('chat').innerHTML+='<div class="item"><b>TimePressure</b><small>'+esc(d.reply||d.error)+'</small></div>'};
