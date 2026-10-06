@@ -84,11 +84,14 @@ def discover_active(limit=10):
 def score_active(task):
  if str(getattr(task,"marketplace","")).lower()=="okx.ai": return okx_score(task)
  if isinstance(task,dict):
-  minutes=max(1,int(task.get("estimated_minutes",30) or 30)); reward=float(task.get("reward_usd",task.get("reward",0)) or 0)
-  probability=max(0,min(1,float(task.get("probability",.25) or .25))); risk=max(0,min(1,float(task.get("risk",.3) or .3)))
-  return round((reward*probability*(1-.65*risk))/(minutes/60),4)
- return 0.0
-
+  get=lambda k,default=None: task.get(k,default)
+ else:
+  get=lambda k,default=None: getattr(task,k,default)
+ minutes=max(1,int(get("estimated_minutes",30) or 30))
+ reward=float(get("reward_usd",get("reward",0)) or 0)
+ probability=max(0,min(1,float(get("probability",.25) or .25)))
+ risk=max(0,min(1,float(get("risk",.3) or .3)))
+ return round((reward*probability*(1-.65*risk))/(minutes/60),4)
 def execute_active(task_id,instruction):
  p=profile()
  if os.getenv("TIMEPRESSURE_MARKETPLACE_AUTOMATION","false").lower()!="true": return {"ok":False,"marketplace":p.name,"error":"Write automation is disabled."}
