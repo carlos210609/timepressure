@@ -87,7 +87,17 @@ def build_growth_plan(target_url: str, facts: dict, pressure: float, social_acco
         "reason": "Only provider/analytics-confirmed traffic counts as progress.",
         "expectedSignal": "Verified visits, sources and conversion signals.",
     })
-    for offset, item in enumerate(playbook, start=6):\n        plan.append({\n            "action": "playbook_strategy",\n            "priority": offset,\n            "strategyId": item["id"],\n            "channel": item["channel"],\n            "tactic": item["tactic"],\n            "reason": item["strategy"],\n            "expectedSignal": ", ".join(item["metrics"]),\n        })\n    return sorted(plan, key=lambda x: x["priority"])
+    for offset, item in enumerate(playbook, start=6):
+        plan.append({
+            "action": "playbook_strategy",
+            "priority": offset,
+            "strategyId": item["id"],
+            "channel": item["channel"],
+            "tactic": item["tactic"],
+            "reason": item["strategy"],
+            "expectedSignal": ", ".join(item["metrics"]),
+        })
+    return sorted(plan, key=lambda x: x["priority"])
 
 
 def make_content_brief(target_url: str, facts: dict) -> dict:
