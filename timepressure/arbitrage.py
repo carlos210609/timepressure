@@ -66,6 +66,6 @@ class ArbitrageEngine:
                 if buy["price"]>=sell["price"]: buy,sell=sell,buy
                 out.append(ArbitrageAnalyzer().analyze(buy,sell,capital,
                     fees=float(buy.get("fee",0))+float(sell.get("fee",0)),
-                    slippage=max(float(buy.get("slippage",0)),float(sell.get("slippage",0)),
-                    transfer_cost=float(buy.get("transfer_cost",0))))
+                    slippage=max(float(buy.get("slippage",0)), float(sell.get("slippage",0))),
+                    transfer_cost=float(buy.get("transfer_cost",0)))
         return OpportunityRanker().rank(out)
