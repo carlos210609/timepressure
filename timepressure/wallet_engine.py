@@ -26,7 +26,7 @@ class WalletEngine:
         try:os.chmod(self.path,0o600)
         except OSError:pass
 
-    def total(self): return round(sum(self.data["balances"].values()),8)
+    def total(self): return round(sum(self.data["balances"][k] for k in ("AVAILABLE","RESERVED","SAVINGS","TRADING","PENDING")),8)
     def set_rules(self,**rules):
         for k,v in rules.items():
             if k.endswith("_pct") and float(v)<0: raise ValueError("Percentages cannot be negative.")
@@ -95,5 +95,5 @@ class WalletEngine:
 
     def snapshot(self):
         return {"asset":self.data["asset"],"balances":dict(self.data["balances"]),
-                "total":self.total(),"rules":dict(self.data["rules"]),"ledger_entries":len(self.data["ledger"]),
+                "total":self.total(),"profit":self.data["balances"]["PROFIT"],"loss":self.data["balances"]["LOSS"],"rules":dict(self.data["rules"]),"ledger_entries":len(self.data["ledger"]),
                 "ledger_valid":self.verify_ledger()}
