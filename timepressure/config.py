@@ -46,4 +46,5 @@ def load_config():
         [{"name": "temp-mail.io", "url": "https://temp-mail.io/en", "domain": "temp-mail.io"}],
         max(1.0, min(3.0, _num("TIMEPRESSURE_PRESSURE_MULTIPLIER", 1.5))),
         max(1, int(_num("TIMEPRESSURE_IDLE_TICK_THRESHOLD", 3))),
+        os.getenv("TIMEPRESSURE_TARGET_URL") or None,
     )
