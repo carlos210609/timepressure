@@ -18,7 +18,8 @@ from .traffic import campaign_url, record_visit, start_campaign, traffic_snapsho
 from .social import approve_post, mark_published, queue_post, record_metrics, register_account, social_snapshot
 from .innovation import intelligence_snapshot
 from .revenue import RevenueOpportunity, RevenueAttempt, select_next_opportunity, start_attempt, complete_attempt, revenue_snapshot, score_revenue_opportunity
-from okx_ai import discover as marketplace_discover, snapshot as marketplace_snapshot, score as marketplace_score
+from okx_ai import snapshot as marketplace_snapshot
+from marketplace_registry import list_marketplaces, status as marketplace_status, select as marketplace_select, discover_active as marketplace_discover, score_active as marketplace_score
 from marketplace_accounts import public_status as marketplace_account_status
 from .health import system_health
 
@@ -107,7 +108,8 @@ def build_parser():
     sub.add_parser("hunt", help="Discover public paid opportunities and queue the best ones.")
     sub.add_parser("tasks", help="Show active multitask opportunities and learned strategy stats.")
     marketplaces = sub.add_parser("marketplaces", help="Inspect the OKX.AI Task Marketplace.")
-    marketplaces.add_argument("action", choices=["scan", "status"], nargs="?", default="scan")
+    marketplaces.add_argument("action", choices=["list", "use", "scan", "status"], nargs="?", default="scan")
+    marketplaces.add_argument("marketplace", nargs="?", help="Marketplace id for the use action.")
     marketplaces.add_argument("--limit", type=int, default=10, help="Maximum OKX.AI tasks to inspect.")
 
     traffic = sub.add_parser("traffic", help="Run a legitimate website traffic campaign.")
@@ -252,17 +254,22 @@ def main(argv=None):
             return 0
 
         if args.cmd == "marketplaces":
+            if args.action == "list":
+                _print_json({"marketplaces": list_marketplaces()})
+                return 0
+            if args.action == "use":
+                if not args.marketplace:
+                    raise ValueError("Pass a marketplace id, for example: marketplaces use okx_ai")
+                _print_json(marketplace_select(args.marketplace))
+                return 0
             if args.action == "status":
-                _print_json({
-                    "marketplaces": marketplace_snapshot(),
-                    "accounts": marketplace_account_status(),
-                })
+                _print_json(marketplace_status())
                 return 0
             tasks = marketplace_discover(max(1, min(args.limit, 50)))
             _print_json({
-                "marketplaces": marketplace_snapshot(),
+                **marketplace_status(),
                 "accounts": marketplace_account_status(),
-                "tasks": [dict(vars(x), score=marketplace_score(x)) for x in tasks],
+                "tasks": [dict(vars(x), score=marketplace_score(x)) if hasattr(x, "__dataclass_fields__") else {**x, "score": marketplace_score(x)} for x in tasks],
                 "errors": state.marketplace_errors,
                 "decision": state.decision,
                 "learning": state.learning,
