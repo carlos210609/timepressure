@@ -38,6 +38,12 @@ Without an environment target:
 - Learning Loop: keeps the agent focused on measurable signals.
 - Pressure Control: changes urgency without changing safety policy.
 
+## 500-strategy acquisition playbook
+
+TimePressure now includes **500 distinct traffic strategies** across 25 acquisition channels, including SEO, content, communities, social, video, newsletters, partnerships, PR, directories, opt-in email, product-led acquisition, events, podcasts, local discovery, referrals, creators, accessibility, analytics, seasonal campaigns, retention, international and developer ecosystems. The agent selects a small subset instead of blindly running all 500, avoids recently selected strategies, and prioritizes them according to the campaign phase and pressure level.
+
+The playbook is strategy guidance: execution remains subject to authorization, platform rules, privacy/consent requirements and the project's anti-spam policy.
+
 ## Pressure scale
 
 LOW = 0% = 1.00x; NORMAL = 25% = 1.50x; HIGH = 75% = 2.50x; EXTREME = 100% = 3.00x.
