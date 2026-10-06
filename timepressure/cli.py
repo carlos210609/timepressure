@@ -37,6 +37,9 @@ def _status_payload(state, config):
         "traffic": traffic_snapshot(state),
         "social": social_snapshot(state),
         "intelligence": intelligence_snapshot(state, config),
+        "marketplaces": marketplace_snapshot(),
+        "marketplaceTasks": state.marketplace_tasks[:20],
+        "marketplaceErrors": state.marketplace_errors[:10],
     }
 
 
@@ -78,9 +81,9 @@ def _run_agent(config, store, state, once=False):
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="timepressure",
-        description="TimePressure — open-source autonomous agent runtime driven by time pressure.",
+        description="TimePressure — autonomous multi-marketplace task execution engine driven by time pressure.",
     )
-    parser.add_argument("--version", action="version", version="TimePressure 0.5.0")
+    parser.add_argument("--version", action="version", version="TimePressure 0.6.0")
     sub = parser.add_subparsers(dest="cmd")
 
     run = sub.add_parser("run", help="Run the autonomous agent continuously.")
