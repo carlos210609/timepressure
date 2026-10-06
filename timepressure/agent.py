@@ -128,6 +128,7 @@ class Agent:
                 facts,
                 self.state.pressure.pressure,
                 social["totals"]["connected"],
+                self.state,
             )
             brief = make_content_brief(target, facts)
             ai_prompt = (
@@ -152,6 +153,11 @@ class Agent:
             }
             self.state.working_plan = [
                 f"{item['action']}: {item['reason']}" for item in plan
+            ]
+            self.state.decision["playbookIds"] = [
+                item["strategyId"]
+                for item in plan
+                if item.get("action") == "playbook_strategy"
             ]
             self._remember(
                 "traffic_analysis",
