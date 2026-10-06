@@ -53,7 +53,7 @@ def select(marketplace_id):
  return status()
 
 def profile(marketplace_id=None): return BY_ID[marketplace_id or active_id()]
-def _configured(p): return bool(os.getenv(p.bridge_env or ""))
+def _configured(p):\n    if p.bridge_env and os.getenv(p.bridge_env):\n        return True\n    legacy = "AGENTHANSA_API_KEY" if p.id == "agenthansa" else None\n    return bool(legacy and os.getenv(legacy))
 
 def _generic_bridge(p,action,**payload):
  command=os.getenv(p.bridge_env or "","").strip()
