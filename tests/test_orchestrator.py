@@ -14,3 +14,4 @@ class OrchestratorTests(unittest.TestCase):
                 marketplace="test"; task_id="1"; category="coding"
             o.learn(T(),True,250,15)
             self.assertEqual(state.learning["test:coding"]["successes"],1)
+            self.assertEqual(state.executions, [])
