@@ -150,101 +150,6 @@ class AgentHansaAdapter(MarketplaceAdapter):
         return result
 
 
-class AgentPactAdapter(MarketplaceAdapter):
-    name = "AgentPact"
-
-    def __init__(self):
-        super().__init__()
-        self.base_url = os.getenv("AGENTPACT_BASE_URL", "https://api.agentpact.dev/api/v1").rstrip("/")
-        self.api_key = os.getenv("AGENTPACT_API_KEY")
-
-    def discover(self, limit=20):
-        if not self.api_key:
-            return []
-        data = _http_json(
-            f"{self.base_url}/tasks?limit={max(1, min(int(limit), 50))}",
-            {"Authorization": f"Bearer {self.api_key}", "Accept": "application/json"},
-        )
-        rows = data.get("tasks", data if isinstance(data, list) else [])
-        result = []
-        for row in rows[:limit]:
-            task_id = str(_first(row, "id", "task_id", default=""))
-            if not task_id:
-                continue
-            reward = float(_first(row, "reward", "budget", "amount", default=0) or 0)
-            result.append(MarketTask(
-                self.name, task_id,
-                str(_first(row, "title", "name", default=f"AgentPact task {task_id}")),
-                str(_first(row, "description", "scope", "brief", default="")),
-                str(_first(row, "url", default="https://www.agentpact.io/")),
-                reward, str(_first(row, "category", "type", default="general")),
-                str(_first(row, "status", default="open")), 30, 0.25, 0.30, True,
-                "official AgentPact API",
-            ))
-        return result
-
-
-class BountyBookAdapter(MarketplaceAdapter):
-    name = "BountyBook"
-
-    def __init__(self):
-        super().__init__()
-        self.base_url = os.getenv("BOUNTYBOOK_BASE_URL", "https://api.bountybook.ai").rstrip("/")
-        self.private_key = os.getenv("BOUNTYBOOK_PRIVATE_KEY")
-
-    def discover(self, limit=20):
-        data = _http_json(f"{self.base_url}/jobs?limit={max(1, min(int(limit), 50))}")
-        rows = data.get("jobs", data if isinstance(data, list) else [])
-        result = []
-        for row in rows[:limit]:
-            task_id = str(_first(row, "id", "job_id", default=""))
-            if not task_id:
-                continue
-            result.append(MarketTask(
-                self.name, task_id,
-                str(_first(row, "title", "name", default=f"BountyBook job {task_id}")),
-                str(_first(row, "description", "brief", default="")),
-                str(_first(row, "url", default="https://www.bountybook.ai/")),
-                float(_first(row, "reward", "bounty", "amount", default=0) or 0),
-                str(_first(row, "category", "type", default="general")),
-                str(_first(row, "status", default="open")), 30, 0.25, 0.35, True,
-                "official BountyBook API; wallet-signature auth required for account actions",
-            ))
-        return result
-
-
-class WurkAdapter(MarketplaceAdapter):
-    name = "WURK"
-
-    def __init__(self):
-        super().__init__()
-        self.api_url = os.getenv("WURK_API_URL", "https://wurkapi.fun").rstrip("/")
-        self.api_key = os.getenv("WURK_API_KEY")
-
-    def discover(self, limit=20):
-        headers = {"Accept": "application/json", "User-Agent": "TimePressure/1.0"}
-        if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
-        data = _http_json(f"{self.api_url}/jobs?limit={max(1, min(int(limit), 50))}", headers)
-        rows = data.get("jobs", data.get("items", data if isinstance(data, list) else []))
-        result = []
-        for row in rows[:limit]:
-            task_id = str(_first(row, "id", "job_id", "task_id", default=""))
-            if not task_id:
-                continue
-            result.append(MarketTask(
-                self.name, task_id,
-                str(_first(row, "title", "name", default=f"WURK job {task_id}")),
-                str(_first(row, "description", "brief", default="")),
-                str(_first(row, "url", default="https://wurk.fun/")),
-                float(_first(row, "reward", "bounty", "amount", default=0) or 0),
-                str(_first(row, "category", "type", default="general")),
-                str(_first(row, "status", default="open")), 30, 0.20, 0.40, True,
-                "official WURK API/MCP",
-            ))
-        return result
-
-
 class OfficialBridgeAdapter(MarketplaceAdapter):
     """Adapter for marketplaces whose official CLI/SDK is the source of truth.
 
@@ -313,9 +218,9 @@ def adapters():
         ZeroXWorkAdapter(),
         AgentHansaAdapter(),
         OfficialBridgeAdapter("Clustly", "TIMEPRESSURE_CLUSTLY_BRIDGE"),
-        AgentPactAdapter(),
-        BountyBookAdapter(),
-        WurkAdapter(),
+        OfficialBridgeAdapter("AgentPact", "TIMEPRESSURE_AGENTPACT_BRIDGE"),
+        OfficialBridgeAdapter("BountyBook", "TIMEPRESSURE_BOUNTYBOOK_BRIDGE"),
+        OfficialBridgeAdapter("WURK", "TIMEPRESSURE_WURK_BRIDGE"),
         OfficialBridgeAdapter("Daydreams/Lucid", "TIMEPRESSURE_DAYDREAMS_BRIDGE"),
     ]
 
