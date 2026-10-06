@@ -13,6 +13,9 @@ def discover_all(limit_per_marketplace: int = 10):
     except Exception as exc:
         return [], [{"marketplace": marketplace_status()["active"]["name"], "error": str(exc)}]
 
+def score(task):
+    return score_active(task)
+
 def execute_task_by_marketplace(marketplace: str, task_id: str, instruction: str):
     active = marketplace_status()["active"]["id"]
     requested = marketplace.strip().lower().replace("-", "_")
@@ -27,5 +30,5 @@ def snapshot():
     return list_marketplaces()
 
 __all__ = ["MarketTask","discover_all","execute_task","active_id","discover_active",
-           "execute_task_by_marketplace","execute_task","score_active","snapshot",
+           "execute_task_by_marketplace","execute_task","score","score_active","snapshot",
            "marketplace_status"]
