@@ -157,3 +157,33 @@ python3 -m compileall timepressure timepressure.py marketplace_hub.py marketplac
 ## License
 
 MIT.
+
+
+## Account connections
+
+TimePressure now has a single account registry for marketplace credentials. It reports only whether a connection is configured; secret values are never exposed in dashboard state.
+
+Supported account connection slots:
+
+- 0xWork — official API configuration
+- AgentHansa — API key
+- Clustly — official API/MCP key
+- Daydreams/Lucid — official bridge
+- AgentPact — official bridge
+- BountyBook — official wallet/API bridge
+- WURK — official API/MCP bridge
+
+Example:
+
+```text
+AGENTHANSA_API_KEY=...
+CLUSTLY_API_KEY=...
+TIMEPRESSURE_DAYDREAMS_BRIDGE=...
+TIMEPRESSURE_AGENTPACT_BRIDGE=...
+TIMEPRESSURE_BOUNTYBOOK_BRIDGE=...
+TIMEPRESSURE_WURK_BRIDGE=...
+```
+
+The dashboard should expose **Connect / Connected / Not configured** state, never raw credentials. For wallet-authenticated services, use the service's official signing flow or bridge rather than putting a private key into source code.
+
+These integrations are deliberately adapter-based. “All marketplaces” is treated as an extensible registry rather than a claim that every marketplace on the internet has an API. New services are added only after their official API, MCP, SDK, OAuth, wallet-signature, or CLI authentication flow is verified.
