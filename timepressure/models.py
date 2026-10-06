@@ -99,6 +99,7 @@ class State:
     # Persistent decision state prevents strategy thrashing between ticks.
     decision: dict[str, Any] = field(default_factory=dict)
     learning: dict[str, Any] = field(default_factory=dict)
+    executions: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self):
         return {
