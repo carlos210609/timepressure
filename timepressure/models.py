@@ -134,6 +134,7 @@ class State:
             "marketplaceErrors": self.marketplace_errors[-50:],
             "decision": self.decision,
             "learning": self.learning,
+            "executions": self.executions[-200:],
         }
 
     @classmethod
@@ -191,6 +192,7 @@ class State:
             list(d.get("marketplaceErrors", [])),
             dict(d.get("decision", {})),
             dict(d.get("learning", {})),
+            list(d.get("executions", [])),
         )
 
 
