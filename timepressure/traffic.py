@@ -21,7 +21,7 @@ def start_campaign(state, target_url: str, target_visits: int, campaign: str) ->
         raise ValueError("Traffic target must be positive.")
     assert_https_public_url(target_url)
     state.traffic = TrafficState(str(uuid.uuid4()), target_url, campaign, target_visits, 0, time.time(), "active")
-    state.working_goal = f"Increase legitimate traffic to {target_url}"
+    state.working_goal = f"Generate legitimate, measurable traffic to {target_url}"
     return state.traffic
 
 def record_visit(state, source: str, visits: int = 1, reference: str | None = None):
