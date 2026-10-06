@@ -96,6 +96,7 @@ def build_parser():
     ts.add_parser("status")
     l = ts.add_parser("link")
     l.add_argument("source")
+    l.add_argument("--url", default=None)
     l.add_argument("--medium", default="traffic")
     l.add_argument("--campaign", default="timepressure-growth")
     r = ts.add_parser("record")
@@ -213,7 +214,7 @@ def main(argv=None):
             _print(traffic_snapshot(state))
             return 0
         if args.sub == "link":
-            _print({"url": campaign_url(args.url if hasattr(args, "url") else (state.target_url or config.target_url), args.source, args.medium, args.campaign)})
+            _print({"url": campaign_url(args.url or state.target_url or config.target_url, args.source, args.medium, args.campaign)})
             return 0
         if args.sub == "record":
             event = record_visit(state, args.source, args.visits, args.reference)
