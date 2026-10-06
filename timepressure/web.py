@@ -13,6 +13,7 @@ from .innovation import intelligence_snapshot
 from .revenue import RevenueOpportunity, RevenueAttempt, score_revenue_opportunity, revenue_snapshot
 from marketplace_hub import snapshot as marketplace_snapshot
 from marketplace_accounts import public_status as marketplace_account_status
+from .health import system_health
 
 
 INDEX = r"""<!doctype html>
@@ -160,6 +161,7 @@ def dashboard_payload(state, config):
         "marketplaceTasks": state.marketplace_tasks[:100],
         "marketplaceAccounts": marketplace_account_status(),
         "marketplaceErrors": state.marketplace_errors[:20],
+        "health": system_health(marketplace_account_status(), state),
     }
 
 
