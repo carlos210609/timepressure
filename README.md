@@ -67,7 +67,7 @@ python3 timepressure.py marketplaces status
 
 The selection is persisted in `.data/marketplace.json`. Scanning and execution always target the active marketplace; TimePressure refuses cross-marketplace execution.
 
-Available connector slots include **OKX.AI, 0xWork, Upwork, Fiverr, Freelancer, Clickworker and Toloka**. A non-OKX slot is only operational after its official/authorized bridge is configured.
+Available connector slots include **OKX.AI, 0xWork, AgentHansa, Clustly, Daydreams/Lucid, AgentPact, BountyBook, WURK, Upwork, Fiverr, Freelancer, Clickworker and Toloka**. A non-OKX slot is only operational after its official/authorized bridge is configured.
 
 ## OKX.AI integration
 
