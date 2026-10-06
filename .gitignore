@@ -1,9 +1,6 @@
+.timepressure.json
 __pycache__/
 *.py[cod]
+.pytest_cache/
 .venv/
-.data/
-.env
-*.log
-build/
-dist/
-*.egg-info/
+venv/

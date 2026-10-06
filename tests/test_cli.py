@@ -1,27 +1,16 @@
 import unittest
+from timepressure.engine import build_plan, validate_url
+from timepressure.state import State
 
-from timepressure.cli import build_parser
+class CoreTests(unittest.TestCase):
+    def test_url_validation(self):
+        self.assertEqual(validate_url("https://example.com"),"https://example.com")
+        with self.assertRaises(ValueError): validate_url("http://example.com")
+        with self.assertRaises(ValueError): validate_url("https://localhost")
+    def test_plan_has_one_execution_focus(self):
+        plan=build_plan({"title":"Example","description":"A service"},50,0)
+        self.assertEqual(len(plan),3); self.assertEqual(plan[1]["action"],"execute")
+    def test_state_defaults(self):
+        state=State(); self.assertEqual(state.pressure,50.0); self.assertEqual(state.cycles,0)
 
-
-class CLITests(unittest.TestCase):
-    def test_parser_is_traffic_only(self):
-        parser = build_parser()
-        for argv in [
-            ["run"], ["run", "--once"], ["run", "--web"], ["web"],
-            ["status"], ["doctor"], ["reset"], ["pressure"],
-            ["traffic", "status"], ["traffic", "start", "https://example.com", "100"],
-            ["traffic", "link", "google"], ["social", "status"],
-        ]:
-            with self.subTest(argv=argv):
-                self.assertIsNotNone(parser.parse_args(argv))
-
-    def test_legacy_commands_are_not_exposed(self):
-        parser = build_parser()
-        for argv in [["marketplaces", "list"], ["revenue", "engine"], ["wallet", "balance"], ["arbitrage", "scan"]]:
-            with self.subTest(argv=argv):
-                with self.assertRaises(SystemExit):
-                    parser.parse_args(argv)
-
-
-if __name__ == "__main__":
-    unittest.main()
+if __name__=="__main__": unittest.main()
