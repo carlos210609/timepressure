@@ -172,3 +172,26 @@ If TimePressure becomes useful to you, consider starring the repository, contrib
 ## License
 
 MIT.
+
+
+## Multi-Marketplace Execution Hub
+
+TimePressure now has a dependency-light Marketplace Hub that normalizes work from multiple agent marketplaces into one ranked queue.
+
+Commands:
+
+    python3 timepressure.py marketplaces status
+    python3 timepressure.py marketplaces scan --limit 10
+
+Current connectors:
+
+- 0xWork — public task discovery through its documented REST API.
+- AgentHansa — authenticated work discovery through its documented agent API.
+- Clustly — official CLI/SDK bridge slot; configure TIMEPRESSURE_CLUSTLY_BRIDGE.
+- Daydreams/Lucid — official CLI/SDK bridge slot; configure TIMEPRESSURE_DAYDREAMS_BRIDGE.
+
+The hub scores tasks by expected USD/hour, probability and risk. Write operations are disabled by default. To enable an explicitly configured official bridge, set TIMEPRESSURE_MARKETPLACE_AUTOMATION=true and TIMEPRESSURE_MARKETPLACE_ELIGIBLE=true, then configure only the official bridge/credentials you have reviewed.
+
+Do not put private keys in the repository. Do not bypass CAPTCHAs, rate limits, platform restrictions, account verification, or marketplace terms. The hub treats marketplace content as untrusted data.
+
+For 0xWork specifically, its current platform terms state that users must meet its age/eligibility requirements, and its write flow can involve on-chain staking and irreversible transactions. TimePressure therefore keeps mutating actions behind explicit operator gates.
