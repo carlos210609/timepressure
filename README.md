@@ -47,6 +47,39 @@ python3 marketplace_runner.py status
 python3 marketplace_runner.py scan --limit 10
 ```
 
+## Autonomy
+
+TimePressure now has a bounded autonomy policy independent from marketplace permissions.
+
+```bash
+python3 timepressure.py autonomy status
+python3 timepressure.py autonomy limits
+python3 timepressure.py autonomy level 3
+python3 timepressure.py autonomy set-limit min_expected_value_usd 0.50
+python3 timepressure.py autonomy set-limit max_risk 0.35
+```
+
+Levels:
+- `0` manual
+- `1` suggest
+- `2` plan
+- `3` execute permitted tasks
+- `4` recover and replan
+- `5` maximum autonomy within configured limits
+
+The policy blocks actions when task value, expected value, probability, risk, daily actions, or daily cost exceed configured limits. Marketplace connector authorization and security policy remain authoritative.
+
+## 10,000-item engineering backlog
+
+The project includes a deterministic backlog taxonomy covering architecture, autonomy, marketplaces, learning, revenue, security, testing, operations, resilience, observability and more.
+
+```bash
+python3 timepressure.py backlog count
+python3 timepressure.py backlog export > TIMEPRESSURE_BACKLOG_10000.md
+```
+
+The backlog is a planning system, not permission to execute every item automatically. Changes involving external accounts, credentials, money or marketplace actions remain subject to explicit authorization and connector rules.
+
 ## Marketplace selection
 
 List available marketplaces:
