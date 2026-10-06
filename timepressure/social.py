@@ -10,6 +10,8 @@ import time
 import uuid
 from dataclasses import asdict, dataclass, field
 
+from .security import assert_https_public_url
+
 PLATFORMS = ("x", "facebook", "instagram", "reddit", "tiktok", "youtube")
 
 
@@ -59,6 +61,7 @@ def queue_post(state, account_id: str, text: str, url: str, campaign: str):
         raise ValueError("Social account is disabled")
     if not text.strip():
         raise ValueError("Post text cannot be empty")
+    assert_https_public_url(url)
     post = SocialPost(str(uuid.uuid4()), account.id, account.platform, text.strip(), url, campaign.strip() or "timepressure")
     state.social_posts.append(post)
     state.social_posts = state.social_posts[-5000:]
