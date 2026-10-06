@@ -1,42 +1,31 @@
-"""Compatibility facade for the OKX.AI-only TimePressure marketplace layer.
-
-The old multi-marketplace hub was intentionally removed. Keep this module so
-older imports do not break while exposing only OKX.AI.
-"""
+"""Compatibility facade for the selectable TimePressure marketplace layer."""
 from __future__ import annotations
+from marketplace_registry import (
+    active_id, discover_active, execute_active, list_marketplaces,
+    score_active, status as marketplace_status,
+)
 
-from dataclasses import asdict
-from okx_ai import OKXAITask, discover, execute_task as _execute_okx_task, run_once, score, snapshot
-
-
-MarketTask = OKXAITask
-
+MarketTask = object
 
 def discover_all(limit_per_marketplace: int = 10):
     try:
-        return discover(limit_per_marketplace), []
+        return discover_active(limit_per_marketplace), []
     except Exception as exc:
-        return [], [{"marketplace": "OKX.AI", "error": str(exc)}]
-
+        return [], [{"marketplace": marketplace_status()["active"]["name"], "error": str(exc)}]
 
 def execute_task_by_marketplace(marketplace: str, task_id: str, instruction: str):
-    if marketplace.lower() != "okx.ai":
-        return {"ok": False, "error": "TimePressure is OKX.AI-only."}
-    task = next((x for x in discover(50) if x.task_id == str(task_id)), None)
-    if not task:
-        return {"ok": False, "error": "Task not found."}
-    return _execute_okx_task(task, instruction)
-
+    active = marketplace_status()["active"]["id"]
+    requested = marketplace.strip().lower().replace("-", "_")
+    if requested != active:
+        return {"ok": False, "error": f"Only the active marketplace can execute tasks. Active: {active}."}
+    return execute_active(task_id, instruction)
 
 def execute_task(marketplace: str, task_id: str, instruction: str):
     return execute_task_by_marketplace(marketplace, task_id, instruction)
 
+def snapshot():
+    return list_marketplaces()
 
-__all__ = [
-    "MarketTask",
-    "discover_all",
-    "execute_task",
-    "run_once",
-    "score",
-    "snapshot",
-]
+__all__ = ["MarketTask","discover_all","execute_task","active_id","discover_active",
+           "execute_task_by_marketplace","execute_task","score_active","snapshot",
+           "marketplace_status"]
