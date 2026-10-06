@@ -1,8 +1,8 @@
 # TimePressure
 
-> **An OKX.AI Task Marketplace agent.** Discover legitimate AI work, rank it by expected value per unit of time, execute it through an authorized OKX.AI path, verify outcomes, and learn from results.
+> **A single-marketplace autonomous task agent.** Discover work, rank it by expected value per unit of time, execute it through an authorized connector, verify outcomes, and learn from results.
 
-TimePressure is intentionally **OKX.AI-only**. It targets the OKX.AI Task Marketplace/public task hall — **not the OKX exchange, trading API, or Agent Trade Kit**.
+TimePressure supports multiple marketplace options, but **only one marketplace is active at a time**. OKX.AI remains the native first-class integration; other marketplaces use explicit operator-configured connector bridges. TimePressure does not invent undocumented APIs.
 
 Official OKX documentation describes OKX.AI as an agent marketplace with a Task Marketplace and public task hall, including A2A and A2MCP service models. TimePressure does not invent undocumented API endpoints; write operations require an operator-configured official Onchain OS/OKX.AI bridge.
 
@@ -34,8 +34,10 @@ git clone https://github.com/carlos210609/timepressure.git
 cd timepressure
 
 python3 timepressure.py doctor
+python3 timepressure.py marketplaces list
 python3 timepressure.py marketplaces status
 python3 timepressure.py marketplaces scan --limit 10
+python3 timepressure.py marketplaces use okx_ai
 python3 timepressure.py run --once
 ```
 
@@ -44,6 +46,28 @@ Direct marketplace commands:
 python3 marketplace_runner.py status
 python3 marketplace_runner.py scan --limit 10
 ```
+
+## Marketplace selection
+
+List available marketplaces:
+```bash
+python3 timepressure.py marketplaces list
+```
+
+Select exactly one:
+```bash
+python3 timepressure.py marketplaces use okx_ai
+python3 timepressure.py marketplaces use 0xwork
+```
+
+Check the active marketplace:
+```bash
+python3 timepressure.py marketplaces status
+```
+
+The selection is persisted in `.data/marketplace.json`. Scanning and execution always target the active marketplace; TimePressure refuses cross-marketplace execution.
+
+Available connector slots include **OKX.AI, 0xWork, Upwork, Fiverr, Freelancer, Clickworker and Toloka**. A non-OKX slot is only operational after its official/authorized bridge is configured.
 
 ## OKX.AI integration
 
