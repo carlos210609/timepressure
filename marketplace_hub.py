@@ -1,11 +1,21 @@
 """Compatibility facade for the selectable TimePressure marketplace layer."""
 from __future__ import annotations
+from okx_ai import OKXAITask
 from marketplace_registry import (
     active_id, discover_active, execute_active, list_marketplaces,
     score_active, status as marketplace_status,
 )
 
-MarketTask = object
+MarketTask = OKXAITask
+
+class _ActiveAdapter:
+    def __init__(self):
+        self.name = marketplace_status()["active"]["name"]
+    def execute(self, task, instruction):
+        return execute_active(task.task_id, instruction)
+
+def adapters():
+    return [_ActiveAdapter()]
 
 def discover_all(limit_per_marketplace: int = 10):
     try:
@@ -31,4 +41,4 @@ def snapshot():
 
 __all__ = ["MarketTask","discover_all","execute_task","active_id","discover_active",
            "execute_task_by_marketplace","execute_task","score","score_active","snapshot",
-           "marketplace_status"]
+           "marketplace_status","adapters"]
