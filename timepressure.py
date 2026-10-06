@@ -64,5 +64,8 @@ def _ensure_chromium():
 if __name__ == "__main__":
     _pip_install()
     _ensure_chromium()
+    if len(sys.argv) > 1 and sys.argv[1] == "marketplaces":
+        from marketplace_runner import main as marketplace_main
+        raise SystemExit(marketplace_main(sys.argv[2:]))
     from timepressure.cli import main
     raise SystemExit(main())
