@@ -58,7 +58,7 @@ def _run_agent(config, store, state, once=False):
     agent = Agent(config, store, state)
     if once:
         agent.tick()
-        _print_json(_status_payload(agent.state, agent.oauth))
+        _print_json(_status_payload(agent.state, config))
         return 0
     print("TimePressure agent running. Press Ctrl+C to stop.")
     print("Use timepressure status --watch in another terminal to monitor it.")
