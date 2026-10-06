@@ -51,6 +51,54 @@ def extract_site_facts(html: str) -> dict:
     }
 
 
+def select_playbook_strategies(state, facts: dict, pressure: float, limit: int = 5) -> list[dict]:
+    """Select a small, non-repeating set of legitimate traffic strategies."""
+    if limit <= 0:
+        return []
+
+    decision = getattr(state, "decision", {}) or {}
+    recent_ids = set(decision.get("playbookIds", []) or [])
+
+    traffic = getattr(state, "traffic", None)
+    verified_visits = int(getattr(traffic, "verified_visits", 0) or 0) if traffic else 0
+    phase = "discovery" if verified_visits < 10 else "growth" if verified_visits < 100 else "optimization"
+
+    facts_text = " ".join(
+        str(facts.get(key, "")) for key in ("title", "description", "textPreview")
+    ).lower()
+
+    scored = []
+    for item in TRAFFIC_PLAYBOOK:
+        if item.get("id") in recent_ids:
+            continue
+
+        score = 0.0
+        channel = str(item.get("channel", "")).lower()
+        tactic = str(item.get("tactic", "")).lower()
+        strategy = str(item.get("strategy", "")).lower()
+
+        if phase == "discovery" and channel in {"seo", "content", "directories", "community"}:
+            score += 4
+        elif phase == "growth" and channel in {"social", "video", "newsletter", "partnership", "creator"}:
+            score += 4
+        elif phase == "optimization" and channel in {"analytics", "conversion", "retention", "referral"}:
+            score += 4
+
+        if any(term in facts_text for term in (channel, tactic)):
+            score += 2
+
+        if pressure >= 75:
+            score += 1 if channel in {"content", "social", "email", "community"} else 0
+        elif pressure < 35:
+            score += 1 if channel in {"seo", "analytics", "conversion"} else 0
+
+        score += max(0, 1 - (TRAFFIC_PLAYBOOK.index(item) / max(len(TRAFFIC_PLAYBOOK), 1)))
+        scored.append((score, item))
+
+    scored.sort(key=lambda pair: (-pair[0], pair[1].get("id", "")))
+    return [item for _, item in scored[:limit]]
+
+
 def build_growth_plan(target_url: str, facts: dict, pressure: float, social_accounts: int = 0, state=None) -> list[dict]:
     domain = urlparse(target_url).netloc
     playbook = select_playbook_strategies(state, facts, pressure) if state is not None else []
