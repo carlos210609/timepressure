@@ -1,36 +1,28 @@
-"""OKX.AI-only account/connection registry for TimePressure."""
+"""Marketplace account/connection status for the selectable registry."""
 from __future__ import annotations
-from dataclasses import dataclass, asdict
-import os
-
-
-@dataclass(frozen=True)
-class AccountConnection:
-    marketplace: str
-    auth_type: str
-    configured: bool
-    status: str
-    credential_env: str | None = None
-    note: str = ""
-
-
-def connections() -> list[AccountConnection]:
-    bridge = bool(os.getenv("TIMEPRESSURE_OKX_AI_BRIDGE"))
-    return [AccountConnection(
-        marketplace="OKX.AI",
-        auth_type="Onchain OS / official bridge",
-        configured=bridge,
-        status="connected" if bridge else "not_configured",
-        credential_env="TIMEPRESSURE_OKX_AI_BRIDGE",
-        note="Use the official OKX.AI / Onchain OS authentication flow. Secrets are never stored by TimePressure.",
-    )]
-
+from dataclasses import asdict
+from marketplace_registry import list_marketplaces
 
 def public_status() -> list[dict]:
-    return [asdict(x) for x in connections()]
+    rows=[]
+    for item in list_marketplaces():
+        rows.append({
+            "marketplace": item["name"],
+            "auth_type": "official connector / bridge",
+            "configured": item["configured"],
+            "status": "active" if item["active"] and item["configured"] else ("selected" if item["active"] else "available"),
+            "credential_env": item["bridge_env"],
+            "note": "Secrets stay outside TimePressure source code.",
+        })
+    return rows
 
+def connections():
+    return public_status()
 
-def get_credential(marketplace: str) -> str | None:
-    if marketplace.lower() != "okx.ai":
-        return None
-    return os.getenv("TIMEPRESSURE_OKX_AI_BRIDGE")
+def get_credential(marketplace: str):
+    key=marketplace.strip().lower().replace("-","_")
+    for item in list_marketplaces():
+        if item["id"]==key:
+            import os
+            return os.getenv(item["bridge_env"]) if item["bridge_env"] else None
+    return None
