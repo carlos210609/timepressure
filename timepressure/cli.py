@@ -106,7 +106,8 @@ def build_parser():
     sub.add_parser("reset", help="Reset the current survival cycle.")
     sub.add_parser("hunt", help="Discover public paid opportunities and queue the best ones.")
     sub.add_parser("tasks", help="Show active multitask opportunities and learned strategy stats.")
-    marketplaces = sub.add_parser("marketplaces", help="Scan and rank work on the OKX.AI Task Marketplace.")
+    marketplaces = sub.add_parser("marketplaces", help="Inspect the OKX.AI Task Marketplace.")
+    marketplaces.add_argument("action", choices=["scan", "status"], nargs="?", default="scan")
     marketplaces.add_argument("--limit", type=int, default=10, help="Maximum OKX.AI tasks to inspect.")
 
     traffic = sub.add_parser("traffic", help="Run a legitimate website traffic campaign.")
