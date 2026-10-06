@@ -80,7 +80,7 @@ class SafetyPolicy:
 
     def validate(self, action:dict):
         text=str(action.get("instruction","")).lower()
-        forbidden=("captcha bypass","rate limit bypass","impersonate","fake identity","fabricate revenue")
+        forbidden=("captcha bypass","bypass captcha","rate limit bypass","bypass rate limit","impersonate","fake identity","fabricate revenue")
         if any(x in text for x in forbidden):
             raise PermissionError("action violates TimePressure safety policy")
         if action.get("irreversible") and self.require_confirmation_for_irreversible and not action.get("confirmed"):
