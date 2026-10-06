@@ -18,6 +18,7 @@ from .decision_engine import MAX_ACTIONS_PER_TICK, focus_context, select_action,
 from .learning import rerank, observe, summary as learning_summary
 from .skills import compact_skill_context
 from marketplace_hub import discover_all as marketplace_discover_all, score as marketplace_score
+from .autonomy import get_policy
 
 
 class Agent:
@@ -233,8 +234,39 @@ class Agent:
             input_text = action_item["input"]
             rationale = action_item.get("rationale", "")
             assert_agent_action(action, input_text, self.config)
+
+            # Autonomy is a second, bounded policy layer. Connector permissions and
+            # security checks still remain authoritative.
+            policy = get_policy(self.config.data_dir)
+            task_value = float((marketplace_next or {}).get("reward_usd", 0) or 0)
+            probability = float((marketplace_next or {}).get("probability", 1) or 1)
+            risk = float((marketplace_next or {}).get("risk", 0) or 0)
+            expected_value = task_value * probability * max(0.0, 1.0 - risk)
+            allowed, autonomy_reason = policy.can_act(
+                expected_value_usd=expected_value,
+                task_value_usd=task_value,
+                probability=probability,
+                risk=risk,
+                cost_usd=0.0,
+            )
+            if not allowed:
+                self._remember("autonomy_block", autonomy_reason, {
+                    "level": policy.level,
+                    "action": action,
+                    "task_id": (marketplace_next or {}).get("task_id"),
+                })
+                self.state.decision = dict(
+                    self.state.decision,
+                    autonomy_blocked=True,
+                    autonomy_reason=autonomy_reason,
+                    updated_at=now,
+                )
+                self.store.save(self.state)
+                return
+
             try:
                 out = run_tool(action, input_text, self.config, self.state, self.store)
+                policy.record_action(0.0)
                 success = True
             except Exception as exc:
                 out = str(exc)
