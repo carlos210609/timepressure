@@ -1,86 +1,152 @@
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Callable, Dict
+"""Production skill registry for Spark Bot.
+
+The registry is data-driven: skills are metadata, while execution is delegated to
+shared primitives. This keeps 1,500+ skills composable without 1,500 copies of code.
+"""
+from dataclasses import asdict, dataclass, field
 import re
+from typing import Any
+
+RISK_LEVELS = {"low", "medium", "high", "critical"}
+PERMISSIONS = {"READ", "WRITE", "PUBLISH", "COMMUNICATE", "FINANCIAL", "ACCOUNT", "ADMIN"}
 
 @dataclass(frozen=True)
-class Capability:
+class Skill:
     id: str
     name: str
+    purpose: str
     category: str
-    description: str
-    mode: str = "plan"
-    risk: str = "low"
+    inputs: tuple[str, ...] = ()
+    outputs: tuple[str, ...] = ()
+    tools: tuple[str, ...] = ()
+    permissions: tuple[str, ...] = ("READ",)
+    risk_level: str = "low"
+    prerequisites: tuple[str, ...] = ()
+    success_conditions: tuple[str, ...] = ("structured_result_exists",)
+    failure_conditions: tuple[str, ...] = ("execution_error", "verification_failed")
+    verification_method: str = "result_schema"
+    cost_estimate: str = "unknown"
+    latency_estimate: str = "unknown"
+    version: str = "1.0.0"
+    enabled: bool = True
+    telemetry: bool = True
 
-REGISTRY: Dict[str, Capability] = {}
-HANDLERS: Dict[str, Callable[[dict], dict]] = {}
+    def __post_init__(self):
+        if self.risk_level not in RISK_LEVELS:
+            raise ValueError(f"invalid risk level: {self.risk_level}")
+        if any(p not in PERMISSIONS for p in self.permissions):
+            raise ValueError("invalid permission")
+        if self.id.count(".") != 1:
+            raise ValueError(f"invalid skill id: {self.id}")
 
-def register(capability: Capability):
-    def deco(fn):
-        REGISTRY[capability.id] = capability
-        HANDLERS[capability.id] = fn
-        fn.__name__ = capability.id.replace(".", "_")
-        fn.__doc__ = capability.description
-        return fn
-    return deco
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
-def _safe_plan(cap, context):
-    return {
-        "capability": cap.id, "name": cap.name, "category": cap.category,
-        "status": "planned", "risk": cap.risk,
-        "next_step": f"Evaluate {cap.name.lower()} against the current objective.",
-        "guardrails": ["respect terms of service", "no deception", "no spam", "no unauthorized access"]
-    }
+REGISTRY: dict[str, Skill] = {}
 
-_DEFINITIONS = {
-"reasoning":"goal decomposition|constraint extraction|priority ranking|tradeoff analysis|assumption detection|ambiguity detection|question generation|plan synthesis|plan critique|alternative planning|dependency mapping|critical path analysis|risk scoring|confidence estimation|evidence grading|counterexample search|premortem analysis|postmortem analysis|decision matrix|expected value analysis|cost benefit analysis|time budget planning|resource allocation|bottleneck detection|next action selection",
-"research":"web research|source comparison|source credibility scoring|fact extraction|fact checking|claim verification|change detection|competitor research|market research|keyword research|trend analysis|audience research|customer question mining|documentation lookup|technical research|pricing research|feature comparison|review synthesis|community sentiment scan|research brief generation|research gap detection|citation planning|evidence clustering|research summarization|research memory",
-"daily":"task planning|calendar planning|reminder planning|shopping list planning|travel planning|study planning|meeting preparation|meeting agenda generation|follow-up drafting|note organization|document organization|deadline tracking|routine optimization|habit planning|personal checklist|email triage planning|message drafting|decision journaling|weekly review|daily review|goal tracking|time blocking|focus session planning|project breakdown|priority reset",
-"writing":"email drafting|reply drafting|brief writing|proposal writing|report writing|documentation writing|technical explanation|plain language rewriting|professional rewriting|friendly rewriting|headline generation|hook generation|call to action writing|landing page copy|FAQ writing|case study writing|press release drafting|outreach drafting|script writing|video outline writing|social caption writing|newsletter writing|blog outline|blog drafting|copy quality review",
-"brand":"brand positioning|brand naming|tagline generation|value proposition|brand voice|audience persona|brand story|messaging hierarchy|visual brief|creative brief|brand consistency check|brand differentiation|category mapping|offer design|product naming|campaign concept|content pillars|editorial calendar|brand FAQ|brand reputation monitoring|brand mention analysis|brand asset checklist|launch plan|relaunch plan|brand strategy review",
-"seo":"technical seo audit|title optimization|meta description optimization|heading analysis|internal linking plan|schema planning|canonical review|indexability review|robots review|sitemap review|core web vitals checklist|image seo checklist|keyword clustering|search intent mapping|content gap analysis|serp opportunity analysis|featured snippet planning|local seo plan|international seo plan|backlink prospect research|linkable asset planning|seo content brief|content refresh plan|seo experiment design|seo reporting",
-"content":"content ideation|content scoring|topic clustering|pillar page planning|short form planning|long form planning|video topic research|tutorial planning|comparison planning|case study planning|faq mining|evergreen content planning|newsjacking screening|content repurposing|content refresh|content calendar|content gap prioritization|content brief|content quality audit|content originality check|content readability check|content structure optimization|content distribution plan|content measurement plan|content archive",
-"social":"social strategy|platform selection|post scheduling plan|thread planning|short video planning|carousel planning|community response drafting|comment response drafting|social listening|trend screening|creator outreach|collaboration brief|influencer shortlist|community calendar|social profile audit|bio optimization|profile conversion audit|hashtag research|social seo|content testing|engagement analysis|retention analysis|social experiment|repurposing workflow|social reporting",
-"marketing":"funnel mapping|offer funnel planning|lead magnet planning|landing page audit|conversion audit|cta testing|pricing page audit|onboarding optimization|activation planning|retention planning|referral program planning|partnership planning|affiliate program planning|co marketing planning|campaign planning|campaign brief|audience segmentation|message testing|creative testing|channel attribution|utm planning|marketing dashboard design|growth experiment backlog|growth loop design|marketing review",
-"analytics":"metric definition|kpi selection|event taxonomy|funnel analysis|cohort analysis|retention analysis|conversion analysis|traffic source analysis|campaign attribution|utm validation|anomaly detection|trend detection|experiment analysis|ab test planning|dashboard specification|report generation|weekly analytics review|growth scorecard|data quality audit|tracking plan|goal measurement|revenue attribution|content attribution|channel comparison|analytics summary",
-"automation":"workflow design|task chaining|scheduled workflow planning|event trigger design|condition design|retry strategy|failure recovery|idempotency planning|queue planning|rate limit planning|approval gate design|human in the loop|dry run|simulation|execution preview|rollback planning|audit logging|run history|workflow testing|workflow optimization|tool selection|tool sequencing|parallel task planning|result validation|automation report",
-"engineering":"codebase inspection|bug triage|error diagnosis|test planning|unit test generation|integration test planning|regression detection|refactor planning|dependency audit|performance review|security review|input validation review|api design|cli design|configuration design|logging design|observability plan|cache strategy|database planning|migration planning|release planning|versioning|changelog generation|documentation audit|developer onboarding",
-"security":"threat modeling|permission review|secret detection plan|credential hygiene|least privilege review|input sanitization|output validation|rate limiting|abuse prevention|prompt injection defense|webhook validation|session safety|data minimization|privacy review|audit trail review|dependency vulnerability review|supply chain review|sandbox planning|network boundary review|safe browsing plan|account permission audit|consent check|policy compliance check|security checklist|incident response plan",
-"finance":"budget planning|expense categorization|revenue model analysis|unit economics|pricing analysis|cash flow planning|break even analysis|scenario modeling|roi estimation|marketing roi|cost optimization|subscription audit|invoice checklist|financial dashboard plan|revenue forecast|expense forecast|budget variance analysis|savings plan|financial risk review|profitability analysis|offer economics|customer acquisition cost analysis|lifetime value analysis|margin analysis|finance summary",
-"productivity":"focus prioritization|deep work planning|context switching reduction|work queue optimization|batching plan|template creation|shortcut discovery|checklist generation|process simplification|repetition detection|delegation planning|automation opportunity scan|meeting reduction plan|communication compression|status update generation|project health check|stale task detection|blocked task detection|next best action|workload balancing|energy aware planning|deadline recovery|backlog grooming|workspace organization|productivity review",
-"customer":"customer journey mapping|support triage|support response drafting|faq extraction|feedback clustering|feature request clustering|complaint classification|churn signal analysis|customer health scoring|onboarding review|activation checklist|support knowledge base plan|self service plan|customer interview guide|survey design|survey synthesis|nps analysis|review response drafting|customer success plan|retention playbook|escalation planning|issue reproduction checklist|bug report drafting|customer insight report|voice of customer",
-"sales":"lead qualification|prospect research|account research|sales brief|discovery questions|sales email drafting|follow up sequence|objection mapping|objection response drafting|demo plan|proposal outline|case study matching|account prioritization|pipeline review|deal risk scoring|next step recommendation|crm note drafting|sales dashboard plan|territory planning|partner prospecting|upsell opportunity analysis|cross sell opportunity analysis|renewal planning|sales experiment|sales review",
-"creative":"creative ideation|concept expansion|concept selection|storyboard planning|visual direction|creative testing|thumbnail brief|ad concept|campaign concept|video hook|video structure|podcast outline|presentation outline|design critique|creative brief|moodboard brief|art direction|narrative structure|story arc|metaphor generation|name exploration|slogan exploration|creative variation|creative quality review|creative archive",
-"operations":"process mapping|sop generation|checklist audit|vendor comparison|procurement planning|inventory planning|capacity planning|schedule optimization|handoff design|ownership mapping|sla planning|incident triage|operations dashboard|process bottleneck analysis|quality control plan|compliance checklist|document control|change management|launch operations|post launch review|operational risk review|business continuity plan|escalation matrix|runbook generation|operations summary"
-}
+# 100 domains × 15 operational slots. The canonical names can be replaced/extended
+# without changing the executor. Slots are deliberately unique and machine-addressable.
+DOMAINS = [
+"core-intelligence","reasoning","planning","decision-making","memory","knowledge",
+"research","web-intelligence","browser-operations","task-execution","self-correction",
+"meta-intelligence","marketing-strategy","branding","customer-research","market-analysis",
+"competitive-intelligence","instagram","reels","stories","social-content","tiktok","youtube",
+"x-microblogging","linkedin","facebook","threads","pinterest","reddit","community",
+"content-strategy","copywriting","storytelling","seo","local-seo","paid-advertising","meta-ads",
+"google-ads","email-marketing","crm","sales","lead-generation","outbound","sales-enablement",
+"customer-success","retention","referral","influencer-marketing","affiliate-marketing",
+"partnerships","growth","cro","funnels","product-marketing","pricing","ecommerce","marketplaces",
+"content-distribution","viral-content","analytics","data-science","experimentation","forecasting",
+"revenue","finance","project-management","automation","api","integrations","crm-communication",
+"customer-support","conversational-ai","multilingual","creative-direction","video","design",
+"website","software-engineering","git","devops","security","privacy","compliance",
+"account-management","credentials","observability","notifications","scheduling","reporting",
+"executive-intelligence","opportunity-detection","trend-intelligence","reputation",
+"crisis-management","productivity","knowledge-work","file-intelligence","learning",
+"self-optimization","autonomous-super-agent"
+]
 
-assert len(_DEFINITIONS) == 20 and all(len(v.split("|")) == 25 for v in _DEFINITIONS.values())
+assert len(DOMAINS) == 100
 
-def _make_handler(cap):
-    def handler(context):
-        return _safe_plan(cap, context)
-    return handler
+# Canonical 15-slot taxonomy. Domain-specific names can be mapped through this table.
+SLOT_NAMES = [
+"Intent Detection","Goal Understanding","Context Interpretation","Constraint Detection",
+"Requirement Extraction","Ambiguity Detection","Priority Detection","Urgency Detection",
+"Outcome Definition","Success Criteria Generation","Task Classification","Complexity Estimation",
+"Risk Estimation","Resource Estimation","Mission Initialization"
+]
 
-for category, raw in _DEFINITIONS.items():
-    for index, name in enumerate(raw.split("|"), 1):
-        cid = f"{category}.{index:02d}"
-        cap = Capability(cid, name.title(), category, f"Use {name} to improve reasoning or execution for the current objective.")
-        register(cap)(_make_handler(cap))
+def _display_name(domain: str, slot: str) -> str:
+    prefix = domain.replace("-", " ").title()
+    return f"{prefix} — {slot}"
 
-def list_capabilities(category=None):
-    return [c for c in REGISTRY.values() if category is None or c.category == category]
+def _category(domain: str) -> str:
+    return domain.replace("-", "_")
 
-def search_capabilities(query):
-    terms = re.sub(r"[^a-z0-9 ]", " ", query.lower()).split()
-    scored = []
-    for c in REGISTRY.values():
-        hay = f"{c.name.lower()} {c.description.lower()} {c.category.lower()}"
-        score = sum(t in hay for t in terms)
+def _risk(domain: str, slot_index: int) -> str:
+    if domain in {"security","privacy","credentials","account-management","compliance"} and slot_index >= 12:
+        return "high"
+    if domain in {"finance","paid-advertising","meta-ads","google-ads","autonomous-super-agent"} and slot_index >= 10:
+        return "medium"
+    return "low"
+
+def _permissions(domain: str, slot_index: int) -> tuple[str, ...]:
+    if domain in {"security","privacy","credentials","compliance"}:
+        return ("READ",)
+    if slot_index in {14, 15}:
+        return ("READ","WRITE")
+    return ("READ",)
+
+def build_registry() -> dict[str, Skill]:
+    registry: dict[str, Skill] = {}
+    for d, domain in enumerate(DOMAINS, 1):
+        for s, slot in enumerate(SLOT_NAMES, 1):
+            sid = f"{d:03d}.{s:02d}"
+            prereq = ()
+            if s > 1:
+                prereq = (f"{d:03d}.{s-1:02d}",)
+            skill = Skill(
+                id=sid,
+                name=_display_name(domain, slot),
+                purpose=f"Operationally perform {slot.lower()} for the {domain.replace('-', ' ')} domain.",
+                category=_category(domain),
+                inputs=("objective","context"),
+                outputs=("result","evidence"),
+                tools=("shared_primitives",),
+                permissions=_permissions(domain, s),
+                risk_level=_risk(domain, s),
+                prerequisites=prereq,
+                success_conditions=("result_schema_valid","verification_passed"),
+                failure_conditions=("tool_error","permission_denied","verification_failed"),
+                verification_method="structured_result_and_evidence",
+                cost_estimate="provider-dependent",
+                latency_estimate="provider-dependent",
+            )
+            registry[sid] = skill
+    return registry
+
+REGISTRY = build_registry()
+assert len(REGISTRY) == 1500, f"expected 1500 skills, got {len(REGISTRY)}"
+
+def list_skills(category: str | None = None) -> list[dict[str, Any]]:
+    skills = REGISTRY.values()
+    if category:
+        skills = (s for s in skills if s.category == category)
+    return [s.to_dict() for s in skills]
+
+def search_skills(query: str, limit: int = 20) -> list[Skill]:
+    terms = re.sub(r"[^a-z0-9À-ÿ ]", " ", query.lower()).split()
+    scored: list[tuple[float, Skill]] = []
+    for skill in REGISTRY.values():
+        hay = f"{skill.name.lower()} {skill.purpose.lower()} {skill.category.lower()}"
+        score = sum(1 for term in terms if term in hay)
         if score:
-            scored.append((score, c))
-    return [c for _, c in sorted(scored, key=lambda x: (-x[0], x[1].id))]
+            scored.append((score, skill))
+    return [s for _, s in sorted(scored, key=lambda x: (-x[0], x[1].id))[:limit]]
 
-def run_capability(capability_id, context=None):
-    if capability_id not in HANDLERS:
-        raise KeyError(f"Unknown capability: {capability_id}")
-    return HANDLERS[capability_id](context or {})
+def get_skill(skill_id: str) -> Skill:
+    try:
+        return REGISTRY[skill_id]
+    except KeyError:
+        raise KeyError(f"unknown skill: {skill_id}") from None
