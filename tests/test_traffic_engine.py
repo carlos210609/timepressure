@@ -1,9 +1,22 @@
 import unittest
 
-from timepressure.traffic_engine import build_growth_plan, extract_site_facts, make_content_brief
+from timepressure.traffic_engine import build_growth_plan, extract_site_facts, make_content_brief, select_playbook_strategies\nfrom timepressure.traffic_playbook import TRAFFIC_PLAYBOOK
 
 
 class TrafficEngineTests(unittest.TestCase):
+    def test_playbook_contains_exactly_500_strategies(self):
+        self.assertEqual(len(TRAFFIC_PLAYBOOK), 500)
+        self.assertEqual(len({item["id"] for item in TRAFFIC_PLAYBOOK}), 500)
+        self.assertTrue(all(item["allowed"] if "allowed" in item else True for item in TRAFFIC_PLAYBOOK))
+
+    def test_playbook_selection_is_bounded(self):
+        class Dummy:
+            decision = {"playbookIds": []}
+            traffic = None
+        selected = select_playbook_strategies(Dummy(), {}, 75, 5)
+        self.assertEqual(len(selected), 5)
+        self.assertEqual(len({item["id"] for item in selected}), 5)
+
     def test_extracts_public_site_facts(self):
         facts = extract_site_facts(
             "<html><head><title>Example</title><meta name='description' content='A site'></head>"
