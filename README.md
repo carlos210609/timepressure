@@ -45,3 +45,16 @@ Secrets remain outside the repository.
 New skills can be added without rewriting the executor. Shared primitives, tool adapters, permissions, verification and telemetry remain centralized.
 
 The legacy `timepressure.py` launcher continues to start Spark Bot.
+
+
+## Premium Web Interface
+
+Run the operational interface locally with:
+
+```bash
+python3 -m web.server
+```
+
+Then open `http://127.0.0.1:8787`.
+
+The web shell is intentionally data-honest: it exposes runtime state through `/api/status`, `/api/skills`, `/api/policy`, and `/api/think`, while external mutations remain behind the Spark Bot permission, verification, and execution layers.
