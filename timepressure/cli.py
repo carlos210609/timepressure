@@ -19,6 +19,8 @@ from .social import approve_post, mark_published, queue_post, record_metrics, re
 from .innovation import intelligence_snapshot
 from .revenue import RevenueOpportunity, RevenueAttempt, select_next_opportunity, start_attempt, complete_attempt, revenue_snapshot, score_revenue_opportunity
 from marketplace_hub import discover_all as marketplace_discover_all, snapshot as marketplace_snapshot, score as marketplace_score
+from marketplace_accounts import public_status as marketplace_account_status
+from .health import system_health
 
 
 def _status_payload(state, config):
@@ -40,6 +42,8 @@ def _status_payload(state, config):
         "marketplaces": marketplace_snapshot(),
         "marketplaceTasks": state.marketplace_tasks[:20],
         "marketplaceErrors": state.marketplace_errors[:10],
+        "marketplaceAccounts": marketplace_account_status(),
+        "health": system_health(marketplace_account_status(), state),
     }
 
 
@@ -83,7 +87,7 @@ def build_parser():
         prog="timepressure",
         description="TimePressure — autonomous multi-marketplace task execution engine driven by time pressure.",
     )
-    parser.add_argument("--version", action="version", version="TimePressure 0.6.0")
+    parser.add_argument("--version", action="version", version="TimePressure 1.0.0")
     sub = parser.add_subparsers(dest="cmd")
 
     run = sub.add_parser("run", help="Run the autonomous agent continuously.")
