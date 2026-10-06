@@ -88,7 +88,7 @@ class State:
     traffic_events: list[TrafficEvent] = field(default_factory=list)
     social_accounts: list[Any] = field(default_factory=list)
     social_posts: list[Any] = field(default_factory=list)
-    working_goal: str = "Find and execute the highest-value legitimate task available across connected marketplaces, then submit and verify the result."
+    working_goal: str = "Generate legitimate, measurable traffic to the configured website target."
     working_plan: list[str] = field(default_factory=list)
     last_thought: str | None = None
     revenue_opportunities: list[dict] = field(default_factory=list)
@@ -137,6 +137,7 @@ class State:
             "learning": self.learning,
             "executions": self.executions[-200:],
             "verifiedLedger": self.verified_ledger[-500:],
+            "targetUrl": self.target_url,
         }
 
     @classmethod
@@ -184,7 +185,7 @@ class State:
              for x in d.get("trafficEvents", [])],
             [SocialAccount(**x) for x in d.get("socialAccounts", [])],
             [SocialPost(**x) for x in d.get("socialPosts", [])],
-            d.get("working", {}).get("goal", "Find and execute the highest-value legitimate task available across connected marketplaces, then submit and verify the result."),
+            d.get("working", {}).get("goal", "Generate legitimate, measurable traffic to the configured website target."),
             d.get("working", {}).get("plan", []),
             d.get("working", {}).get("lastThought"),
             list(d.get("revenueOpportunities", [])),
@@ -196,6 +197,7 @@ class State:
             dict(d.get("learning", {})),
             list(d.get("executions", [])),
             list(d.get("verifiedLedger", [])),
+            d.get("targetUrl"),
         )
 
 
@@ -230,3 +232,4 @@ class Config:
     temp_email_providers: list[dict[str, str]]
     pressure_multiplier: float = 1.5
     idle_tick_threshold: int = 3
+    target_url: str | None = None
