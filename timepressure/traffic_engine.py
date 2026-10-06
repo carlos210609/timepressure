@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 from .security import assert_https_public_url
 from .traffic import campaign_url
 from .social import queue_post
+from .traffic_playbook import TRAFFIC_PLAYBOOK
 
 
 ALLOWED_ACTIONS = (
@@ -50,8 +51,9 @@ def extract_site_facts(html: str) -> dict:
     }
 
 
-def build_growth_plan(target_url: str, facts: dict, pressure: float, social_accounts: int = 0) -> list[dict]:
+def build_growth_plan(target_url: str, facts: dict, pressure: float, social_accounts: int = 0, state=None) -> list[dict]:
     domain = urlparse(target_url).netloc
+    playbook = select_playbook_strategies(state, facts, pressure) if state is not None else []
     plan = [
         {
             "action": "analyze_site",
@@ -85,7 +87,7 @@ def build_growth_plan(target_url: str, facts: dict, pressure: float, social_acco
         "reason": "Only provider/analytics-confirmed traffic counts as progress.",
         "expectedSignal": "Verified visits, sources and conversion signals.",
     })
-    return sorted(plan, key=lambda x: x["priority"])
+    for offset, item in enumerate(playbook, start=6):\n        plan.append({\n            "action": "playbook_strategy",\n            "priority": offset,\n            "strategyId": item["id"],\n            "channel": item["channel"],\n            "tactic": item["tactic"],\n            "reason": item["strategy"],\n            "expectedSignal": ", ".join(item["metrics"]),\n        })\n    return sorted(plan, key=lambda x: x["priority"])
 
 
 def make_content_brief(target_url: str, facts: dict) -> dict:
