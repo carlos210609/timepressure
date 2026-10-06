@@ -24,6 +24,11 @@ from marketplace_accounts import public_status as marketplace_account_status
 from .health import system_health
 from .autonomy import get_policy, LEVELS, DEFAULT_LIMITS
 from .backlog import markdown as backlog_markdown
+from .risk_engine import RiskEngine
+from .wallet_engine import WalletEngine
+from .arbitrage import ArbitrageEngine
+from .bug_bounty import BountyStore, BountyScanner, ProgramRanker, ScopeValidator, FindingManager, EvidenceManager, ReportGenerator, SubmissionTracker, RewardTracker
+from .revenue_router import RevenueRouter
 
 
 def _status_payload(state, config):
@@ -195,6 +200,36 @@ def build_parser():
     quote = wallet_sub.add_parser("quote")
     quote.add_argument("usd", type=float)
     quote.add_argument("rate", type=float)
+
+    capital = sub.add_parser("capital", help="Unified financial control plane.")
+    capital_sub = capital.add_subparsers(dest="sub", required=True)
+    capital_sub.add_parser("status")
+    mode = capital_sub.add_parser("mode"); mode.add_argument("value", choices=["paper","live"])
+    sw = capital_sub.add_parser("switch"); sw.add_argument("name", choices=["emergency_stop","pause_all"]); sw.add_argument("value", choices=["on","off"])
+    lim = capital_sub.add_parser("limit"); lim.add_argument("key"); lim.add_argument("value", type=float)
+
+    wallet2 = sub.add_parser("savings", help="Internal TimePressure financial ledger.")
+    ws = wallet2.add_subparsers(dest="sub", required=True)
+    ws.add_parser("status"); ws.add_parser("ledger"); ws.add_parser("verify")
+    alloc = ws.add_parser("revenue"); alloc.add_argument("amount", type=float); alloc.add_argument("--source",required=True); alloc.add_argument("--reference",required=True)
+    rule = ws.add_parser("rules")
+    rule.add_argument("--reserve",type=float); rule.add_argument("--growth",type=float); rule.add_argument("--experimental",type=float)
+
+    arb = sub.add_parser("arbitrage", help="Analyze read-only market price differences.")
+    ars=arb.add_subparsers(dest="sub",required=True)
+    ars.add_parser("status")
+    ars.add_parser("scan").add_argument("--asset",default=None)
+    ars.add_parser("mode").add_argument("value",choices=["paper","live"])
+
+    bounty = sub.add_parser("bounty", help="Scope-aware bug bounty workflow.")
+    bs=bounty.add_subparsers(dest="sub",required=True)
+    bs.add_parser("status")
+    bd=bs.add_parser("discover"); bd.add_argument("--limit",type=int,default=25)
+    br=bs.add_parser("rank")
+    bfind=bs.add_parser("finding"); bfind.add_argument("program_id"); bfind.add_argument("title"); bfind.add_argument("asset"); bfind.add_argument("severity"); bfind.add_argument("evidence",nargs="+")
+    brep=bs.add_parser("report"); brep.add_argument("finding_id")
+    btrans=bs.add_parser("transition"); btrans.add_argument("submission_id"); btrans.add_argument("state",choices=["DISCOVERED","ELIGIBLE","RESEARCHING","FINDING","VALIDATING","REPORTING","SUBMITTED","TRIAGED","ACCEPTED","REJECTED","PAID"])
+    breward=bs.add_parser("reward"); breward.add_argument("submission_id"); breward.add_argument("amount",type=float); breward.add_argument("reference")
 
     browser = sub.add_parser("browser", help="Use the configured browser automation.")
     browser_sub = browser.add_subparsers(dest="sub", required=True)
@@ -427,6 +462,55 @@ def main(argv=None):
             store.save(state)
             print(f"✓ Recorded USD {cents / 100:.2f} from {args.source}. Status: {state.pressure.status}")
             return 0
+
+        if args.cmd == "capital":
+            risk=RiskEngine(config.data_dir)
+            if args.sub=="status": _print_json(risk.snapshot()); return 0
+            if args.sub=="mode": _print_json(risk.set_mode(args.value)); return 0
+            if args.sub=="switch": _print_json(risk.set_switch(args.name,args.value=="on")); return 0
+            if args.sub=="limit": _print_json(risk.set_limit(args.key,args.value)); return 0
+
+        if args.cmd == "savings":
+            wallet_engine=WalletEngine(config.data_dir)
+            if args.sub=="status": _print_json(wallet_engine.snapshot()); return 0
+            if args.sub=="ledger": _print_json(wallet_engine.data["ledger"]); return 0
+            if args.sub=="verify": _print_json({"valid":wallet_engine.verify_ledger()}); return 0
+            if args.sub=="rules":
+                kwargs={}
+                if args.reserve is not None: kwargs["reserve_pct"]=args.reserve
+                if args.growth is not None: kwargs["growth_pct"]=args.growth
+                if args.experimental is not None: kwargs["experimental_pct"]=args.experimental
+                _print_json(wallet_engine.set_rules(**kwargs)); return 0
+            if args.sub=="revenue":
+                _print_json(wallet_engine.allocate_revenue(args.amount,args.source,args.reference)); return 0
+
+        if args.cmd == "arbitrage":
+            risk=RiskEngine(config.data_dir)
+            if args.sub=="status": _print_json({"risk":risk.snapshot(),"note":"Read-only market adapters are required; LIVE is disabled by default."}); return 0
+            if args.sub=="mode": _print_json(risk.set_mode(args.value)); return 0
+            if args.sub=="scan":
+                from .official_market_adapters import configured_adapters
+                engine=ArbitrageEngine(risk,configured_adapters())
+                ops=engine.analyze(args.asset,capital=float(risk.data["limits"]["max_trade_amount"] or 0))
+                _print_json({"count":len(ops),"opportunities":[vars(x) for x in ops]}); return 0
+
+        if args.cmd == "bounty":
+            store_b=BountyStore(config.data_dir)
+            if args.sub=="status": _print_json(store_b.data); return 0
+            if args.sub=="discover":
+                _print_json(BountyScanner(store_b).discover_from_bugcrowd(args.limit)); return 0
+            if args.sub=="rank":
+                _print_json(ProgramRanker().rank(store_b.data["programs"])); return 0
+            if args.sub=="finding":
+                fnd=FindingManager(store_b).create(args.program_id,args.title,args.asset,args.severity,args.evidence)
+                _print_json(fnd); return 0
+            if args.sub=="report":
+                fnd=next((x for x in store_b.data["findings"] if x["id"]==args.finding_id),None)
+                if not fnd: raise ValueError("Finding not found.")
+                if not EvidenceManager().validate(fnd): raise ValueError("Finding evidence is incomplete.")
+                _print_json(ReportGenerator().generate(fnd)); return 0
+            if args.sub=="transition": _print_json(SubmissionTracker(store_b).transition(args.submission_id,args.state)); return 0
+            if args.sub=="reward": _print_json(RewardTracker(store_b).record(args.submission_id,args.amount,args.reference)); return 0
 
         if args.cmd == "wallet":
             rpc = LitecoinRPC(config)
