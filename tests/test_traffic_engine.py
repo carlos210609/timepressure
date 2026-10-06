@@ -1,6 +1,7 @@
 import unittest
 
-from timepressure.traffic_engine import build_growth_plan, extract_site_facts, make_content_brief, select_playbook_strategies\nfrom timepressure.traffic_playbook import TRAFFIC_PLAYBOOK
+from timepressure.traffic_engine import build_growth_plan, extract_site_facts, make_content_brief, select_playbook_strategies
+from timepressure.traffic_playbook import TRAFFIC_PLAYBOOK
 
 
 class TrafficEngineTests(unittest.TestCase):
