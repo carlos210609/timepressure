@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "timepressure-agent"
-version = "1.0.0"
-description = "Autonomous multi-marketplace task execution engine with verified revenue, learning and safety controls."
+version = "2.0.0"
+description = "Autonomous legitimate website traffic growth engine."
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
-dependencies = ["playwright>=1.50,<2", "PyJWT[crypto]>=2.10,<3"]
+dependencies = []
 
 [project.scripts]
 timepressure = "timepressure.cli:main"
