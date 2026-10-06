@@ -6,7 +6,7 @@ older imports do not break while exposing only OKX.AI.
 from __future__ import annotations
 
 from dataclasses import asdict
-from okx_ai import OKXAITask, discover, execute_task, run_once, score, snapshot
+from okx_ai import OKXAITask, discover, execute_task as _execute_okx_task, run_once, score, snapshot
 
 
 MarketTask = OKXAITask
@@ -25,7 +25,7 @@ def execute_task_by_marketplace(marketplace: str, task_id: str, instruction: str
     task = next((x for x in discover(50) if x.task_id == str(task_id)), None)
     if not task:
         return {"ok": False, "error": "Task not found."}
-    return execute_task(task, instruction)
+    return _execute_okx_task(task, instruction)
 
 
 def execute_task(marketplace: str, task_id: str, instruction: str):
