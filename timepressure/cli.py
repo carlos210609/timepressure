@@ -18,6 +18,7 @@ from .traffic import campaign_url, record_visit, start_campaign, traffic_snapsho
 from .social import approve_post, mark_published, queue_post, record_metrics, register_account, social_snapshot
 from .innovation import intelligence_snapshot
 from .revenue import RevenueOpportunity, RevenueAttempt, select_next_opportunity, start_attempt, complete_attempt, revenue_snapshot, score_revenue_opportunity
+from marketplace_hub import discover_all as marketplace_discover_all, snapshot as marketplace_snapshot, score as marketplace_score
 
 
 def _status_payload(state, config):
@@ -98,6 +99,8 @@ def build_parser():
     sub.add_parser("reset", help="Reset the current survival cycle.")
     sub.add_parser("hunt", help="Discover public paid opportunities and queue the best ones.")
     sub.add_parser("tasks", help="Show active multitask opportunities and learned strategy stats.")
+    marketplaces = sub.add_parser("marketplaces", help="Scan and rank work across configured agent marketplaces.")
+    marketplaces.add_argument("--limit", type=int, default=10, help="Tasks per marketplace.")
 
     traffic = sub.add_parser("traffic", help="Run a legitimate website traffic campaign.")
     traffic_sub = traffic.add_subparsers(dest="sub", required=True)
@@ -238,6 +241,15 @@ def main(argv=None):
         if args.cmd == "tasks":
             portfolio = TaskPortfolio(config.data_dir)
             _print_json({"active": portfolio.snapshot(), "strategyStats": portfolio.stats_snapshot()})
+            return 0
+
+        if args.cmd == "marketplaces":
+            tasks, errors = marketplace_discover_all(max(1, min(args.limit, 50)))
+            _print_json({
+                "marketplaces": marketplace_snapshot(),
+                "tasks": [dict(vars(x), score=marketplace_score(x)) for x in tasks],
+                "errors": errors,
+            })
             return 0
 
         if args.cmd == "traffic":
