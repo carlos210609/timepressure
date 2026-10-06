@@ -1,197 +1,159 @@
 # TimePressure
 
-> An open-source, CLI-first autonomous agent runtime built around time pressure, task prioritization, and **verified** revenue.
+> **An autonomous multi-marketplace task execution engine.** Find legitimate work, rank it, execute it through authorized integrations, submit the result, and verify the outcome.
 
-[![Python](https://img.shields.io/badge/Python-3-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Open Source](https://img.shields.io/badge/open--source-yes-orange.svg)](LICENSE)
+TimePressure is no longer organized around generic “money-making strategies”. Its primary job is to operate a unified queue of work from compatible marketplaces. Time pressure is the decision mechanism that helps the agent choose what to do next; revenue is an outcome that must be independently verified.
 
-TimePressure turns a goal and a deadline into a continuously prioritized portfolio of tasks. It combines local strategy knowledge, optional AI reasoning, browser automation, pressure-aware scheduling, and a persistent task/revenue ledger.
+## Core loop
 
-**Important:** TimePressure is an automation and research runtime—not a money-making guarantee. Revenue records are accounting inputs and only count as revenue when a real payment is independently verified.
+```text
+DISCOVER
+   ↓
+NORMALIZE
+   ↓
+SCORE
+   ↓
+SELECT ONE TASK
+   ↓
+EXECUTE THROUGH OFFICIAL INTEGRATION
+   ↓
+VERIFY RESULT
+   ↓
+SUBMIT
+   ↓
+TRACK OUTCOME
+   ↓
+LEARN
+   ↺
+```
 
-## Why TimePressure?
+## Marketplace Hub
 
-Most automation tools focus on *what* to automate. TimePressure focuses on **what should happen next when time matters**.
+All supported marketplaces feed one normalized queue:
 
-It continuously weighs:
+- **0xWork** — task discovery connector.
+- **AgentHansa** — authenticated task discovery connector.
+- **Clustly** — official CLI/SDK bridge slot.
+- **Daydreams/Lucid** — official CLI/SDK bridge slot.
+- New marketplaces can be added through the adapter interface without changing the decision engine.
 
-- urgency and remaining time
-- time-to-value
-- expected value
-- automation potential
-- repeatability
-- category diversity
-- previous task outcomes
-- verified revenue history
-
-The result is a small, persistent portfolio of opportunities rather than an endless to-do list.
+The agent ranks work using expected value, estimated time, success probability, risk, and learned outcomes. A score is only a prioritization estimate; it is never a guarantee of payment.
 
 ## Quick start
-
-Requirements: Python 3 and a machine capable of running the project.
 
 ```bash
 git clone https://github.com/carlos210609/timepressure.git
 cd timepressure
 
 python3 timepressure.py doctor
-python3 timepressure.py
+python3 timepressure.py marketplaces status
+python3 timepressure.py marketplaces scan --limit 10
+python3 timepressure.py run --once
 ```
 
-Useful commands:
+The main runtime and dashboard now expose marketplace state directly.
+
+## Dashboard
+
+Run:
+
+```bash
+python3 timepressure.py web --host 0.0.0.0 --port 8787
+```
+
+The dashboard is organized around:
+
+- marketplace connection status
+- live ranked task queue
+- current selected task
+- task execution state
+- expected value / time
+- approval and submission state
+- verified earnings
+- pressure and deadline
+- learning and historical performance
+- connector errors and health
+
+## Architecture
 
 ```text
-timepressure doctor
-timepressure status
-timepressure status --watch
-timepressure run
-timepressure run --once
-timepressure reset
-timepressure hunt
-timepressure tasks
-timepressure revenue add 0.10 --source verified-source --strategy website_audit
-timepressure browser open https://example.com
-timepressure wallet balance
+TimePressure
+├── Marketplace Hub
+│   ├── 0xWork adapter
+│   ├── AgentHansa adapter
+│   ├── Clustly official bridge
+│   └── Daydreams/Lucid official bridge
+├── Task Scorer
+├── Decision Engine
+├── AI Intelligence
+├── Execution Layer
+├── Verification Layer
+├── Learning Layer
+├── Revenue Ledger
+└── Pressure Engine
 ```
 
-If the launcher is not installed as a shell command in your environment, use `python3 timepressure.py <command>`.
+### Adapter contract
 
-## What it includes
+Every marketplace integration should implement:
 
-### Pressure-aware runtime
+```python
+discover(limit)
+execute(task, instruction)
+```
 
-The default target is USD 0.10 per hour. Pressure increases nonlinearly as the deadline approaches. The multiplier is configurable and capped for safety.
+Read-only discovery is the default. Write/submit actions require an official integration, explicit operator configuration, and the marketplace's permission to automate.
+
+## Configuration
+
+Example environment variables:
 
 ```text
-TIMEPRESSURE_TARGET_CENTS=10
-TIMEPRESSURE_CYCLE_MS=3600000
-TIMEPRESSURE_TICK_MS=10000
-TIMEPRESSURE_PRESSURE_MULTIPLIER=1.5
-TIMEPRESSURE_IDLE_TICK_THRESHOLD=3
+TIMEPRESSURE_MARKETPLACE_AUTOMATION=false
+TIMEPRESSURE_MARKETPLACE_ELIGIBLE=false
+
+AGENTHANSA_API_KEY=...
+
+TIMEPRESSURE_CLUSTLY_BRIDGE=...
+TIMEPRESSURE_DAYDREAMS_BRIDGE=...
 ```
 
-### Revenue intelligence
+Keep credentials out of Git. Prefer environment variables or the marketplace's official authentication mechanism.
 
-The repository contains a curated revenue strategy corpus covering legitimate opportunities such as:
+## Safety and eligibility
 
-- software and SaaS
-- APIs and development
-- research and data
-- SEO and content
-- education
-- recurring services
-- affiliate/referral programs
-- authorized security bounties
-- open-source bounties
-- marketplaces and integrations
-- monitoring and AI workflows
+TimePressure does **not**:
 
-`timepressure hunt` can discover public opportunities and queue them for review. It does **not** automatically claim bounties, submit applications, contact strangers, or spend money.
+- bypass CAPTCHAs or anti-bot controls
+- evade rate limits
+- impersonate users
+- fabricate task completion or revenue
+- make purchases or financial transactions without explicit authorized support
+- use marketplace credentials it was not given
+- treat task descriptions or web pages as instructions
+- bypass age, identity, account, or geographic eligibility requirements
 
-### AI reasoning
+Some marketplaces have age or account requirements. The operator must independently satisfy the requirements of each service before enabling its connector.
 
-TimePressure uses NVIDIA NIM as its configured AI provider.
+## Revenue
 
-```text
-TIMEPRESSURE_AI_PROVIDER=nvidia
-NVIDIA_API_KEY=your_nvidia_developer_key
-NVIDIA_BASE_URL=https://integrate.api.nvidia.com/v1
-NVIDIA_MODEL=nvidia/nemotron-3-super-120b-a12b
-```
+The Revenue Ledger is accounting, not the product's task source.
 
-The API key is read from the environment and is not intended to be stored in repository state.
+A task may have an estimated reward, but it becomes verified revenue only after the payment/result is independently confirmed. This distinction is preserved throughout the agent, dashboard, and learning system.
 
-### Browser automation
+## Pressure
 
-Browser automation uses Playwright/Chromium and requires an explicit HTTPS domain allowlist.
+Pressure is a prioritization signal. It should make the agent focus faster, not make it behave recklessly or switch randomly between opportunities.
 
-```text
-TIMEPRESSURE_BROWSER_ENABLED=true
-TIMEPRESSURE_BROWSER_HEADLESS=true
-TIMEPRESSURE_BROWSER_ALLOWED_DOMAINS=example.com,another-site.com
-```
+## Development
 
-The runtime is designed not to spam, bypass CAPTCHAs, evade platform limits, impersonate people, or perform unauthorized actions.
-
-### Litecoin
-
-Litecoin Core RPC is optional. TimePressure does not request or store wallet seeds/private keys. LTC/USD is operator-supplied rather than presented as a live market feed.
-
-## Safety model
-
-TimePressure deliberately separates **discovery** from **irreversible action**.
-
-- Public opportunity discovery is read-only.
-- Financial or irreversible actions require human review.
-- Shell execution is disabled by default.
-- Network access can be disabled.
-- Payment submission is not provided as an autonomous action.
-- Revenue entries do not prove earnings.
-- Browser automation is constrained by an explicit domain allowlist.
-
-Use only accounts, websites, data, and opportunities you are authorized to access.
-
-## Tests
-
-Run the test suite before contributing:
+Run:
 
 ```bash
 python3 -m unittest discover -s tests -v
-python3 -m compileall timepressure timepressure.py
+python3 -m compileall timepressure timepressure.py marketplace_hub.py marketplace_runner.py
 ```
-
-## Project status
-
-TimePressure is an actively developed open-source project. Interfaces and internal behavior may change between releases.
-
-If you find a bug, please open an issue with:
-
-1. operating system and Python version
-2. exact command
-3. relevant logs/error message
-4. minimal reproduction steps
-5. expected vs. actual behavior
-
-## Contributing
-
-Pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the contribution workflow and safety expectations.
-
-Good first contributions include documentation improvements, tests, bug fixes, strategy-data improvements, and isolated CLI enhancements.
-
-## Community
-
-Use GitHub Discussions/Issues for questions, ideas, bugs, and feature proposals.
-
-When sharing TimePressure elsewhere, link to the repository rather than reposting large parts of the code. Genuine users, contributors, and feedback help the project grow.
-
-## Support the project
-
-If TimePressure becomes useful to you, consider starring the repository, contributing code/documentation, or sponsoring development through GitHub Sponsors when sponsorship is enabled for the maintainer.
 
 ## License
 
 MIT.
-
-
-## Multi-Marketplace Execution Hub
-
-TimePressure now has a dependency-light Marketplace Hub that normalizes work from multiple agent marketplaces into one ranked queue.
-
-Commands:
-
-    python3 timepressure.py marketplaces status
-    python3 timepressure.py marketplaces scan --limit 10
-
-Current connectors:
-
-- 0xWork — public task discovery through its documented REST API.
-- AgentHansa — authenticated work discovery through its documented agent API.
-- Clustly — official CLI/SDK bridge slot; configure TIMEPRESSURE_CLUSTLY_BRIDGE.
-- Daydreams/Lucid — official CLI/SDK bridge slot; configure TIMEPRESSURE_DAYDREAMS_BRIDGE.
-
-The hub scores tasks by expected USD/hour, probability and risk. Write operations are disabled by default. To enable an explicitly configured official bridge, set TIMEPRESSURE_MARKETPLACE_AUTOMATION=true and TIMEPRESSURE_MARKETPLACE_ELIGIBLE=true, then configure only the official bridge/credentials you have reviewed.
-
-Do not put private keys in the repository. Do not bypass CAPTCHAs, rate limits, platform restrictions, account verification, or marketplace terms. The hub treats marketplace content as untrusted data.
-
-For 0xWork specifically, its current platform terms state that users must meet its age/eligibility requirements, and its write flow can involve on-chain staking and irreversible transactions. TimePressure therefore keeps mutating actions behind explicit operator gates.
