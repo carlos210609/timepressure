@@ -99,6 +99,10 @@ def build_parser():
     parser.add_argument("--version", action="version", version="TimePressure 1.0.0")
     sub = parser.add_subparsers(dest="cmd")
 
+    start = sub.add_parser("start", help="Start the agent, dashboard, and open the dashboard in the browser.")
+    start.add_argument("--host", default=None)
+    start.add_argument("--port", type=int, default=8787)
+
     run = sub.add_parser("run", help="Run the autonomous agent continuously.")
     run.add_argument("--once", action="store_true", help="Run one agent tick and exit.")
     run.add_argument("--web", action="store_true", help="Run the local monitoring dashboard alongside the agent.")
@@ -551,6 +555,29 @@ def main(argv=None):
             from .tools import run_tool
             print(json.dumps(run_tool("browser_open", args.url, config, state, store), indent=2, ensure_ascii=False))
             return 0
+
+        if args.cmd == "start":
+            from .web import serve
+            import threading
+            import webbrowser
+            import time as _time
+
+            web_host = args.host or os.getenv("TIMEPRESSURE_WEB_HOST") or "127.0.0.1"
+            web_port = args.port
+            thread = threading.Thread(
+                target=serve,
+                args=(config, store, state, web_host, web_port),
+                daemon=True,
+            )
+            thread.start()
+            dashboard_url = f"http://127.0.0.1:{web_port}"
+            print(f"Dashboard: {dashboard_url}", flush=True)
+            _time.sleep(1.0)
+            try:
+                webbrowser.open(dashboard_url)
+            except Exception as exc:
+                print(f"Could not open browser automatically: {exc}", file=sys.stderr)
+            return _run_agent(config, store, state)
 
         if args.cmd == "web":
             from .web import serve
