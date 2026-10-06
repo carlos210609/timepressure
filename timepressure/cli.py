@@ -22,6 +22,8 @@ from okx_ai import snapshot as marketplace_snapshot
 from marketplace_registry import list_marketplaces, status as marketplace_status, select as marketplace_select, discover_active as marketplace_discover, score_active as marketplace_score
 from marketplace_accounts import public_status as marketplace_account_status
 from .health import system_health
+from .autonomy import get_policy, LEVELS, DEFAULT_LIMITS
+from .backlog import markdown as backlog_markdown
 
 
 def _status_payload(state, config):
@@ -45,6 +47,7 @@ def _status_payload(state, config):
         "marketplaceErrors": state.marketplace_errors[:10],
         "marketplaceAccounts": marketplace_account_status(),
         "health": system_health(marketplace_account_status(), state),
+        "autonomy": get_policy(config.data_dir).snapshot(),
     }
 
 
@@ -86,7 +89,7 @@ def _run_agent(config, store, state, once=False):
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="timepressure",
-        description="TimePressure — autonomous OKX.AI Task Marketplace agent driven by time pressure.",
+        description="TimePressure — autonomous marketplace task agent driven by bounded time pressure.",
     )
     parser.add_argument("--version", action="version", version="TimePressure 1.0.0")
     sub = parser.add_subparsers(dest="cmd")
@@ -107,6 +110,14 @@ def build_parser():
     sub.add_parser("reset", help="Reset the current survival cycle.")
     sub.add_parser("hunt", help="Discover public paid opportunities and queue the best ones.")
     sub.add_parser("tasks", help="Show active multitask opportunities and learned strategy stats.")
+    autonomy = sub.add_parser("autonomy", help="Configure bounded autonomous execution.")
+    autonomy.add_argument("action", choices=["status", "level", "set-limit", "limits"])
+    autonomy.add_argument("value", nargs="?")
+    autonomy.add_argument("limit_value", nargs="?")
+    backlog = sub.add_parser("backlog", help="Inspect/export the 10,000-item engineering backlog.")
+    backlog.add_argument("action", choices=["count", "export"], nargs="?", default="count")
+    backlog.add_argument("--limit", type=int, default=10000)
+
     marketplaces = sub.add_parser("marketplaces", help="Inspect the OKX.AI Task Marketplace.")
     marketplaces.add_argument("action", choices=["list", "use", "scan", "status"], nargs="?", default="scan")
     marketplaces.add_argument("marketplace", nargs="?", help="Marketplace id for the use action.")
@@ -208,6 +219,33 @@ def main(argv=None):
         return 0
 
     try:
+        if args.cmd == "autonomy":
+            policy = get_policy(config.data_dir)
+            if args.action == "status":
+                _print_json(policy.snapshot())
+                return 0
+            if args.action == "limits":
+                _print_json({"levels": LEVELS, "limits": DEFAULT_LIMITS, "current": policy.snapshot()})
+                return 0
+            if args.action == "level":
+                if args.value is None:
+                    raise ValueError("Usage: autonomy level 0-5")
+                _print_json(policy.set_level(int(args.value)))
+                return 0
+            if args.action == "set-limit":
+                if args.value is None or args.limit_value is None:
+                    raise ValueError("Usage: autonomy set-limit KEY VALUE")
+                _print_json(policy.set_limit(args.value, float(args.limit_value)))
+                return 0
+
+        if args.cmd == "backlog":
+            from .backlog import items
+            if args.action == "count":
+                _print_json({"count": len(items(args.limit)), "available": 10000})
+                return 0
+            print(backlog_markdown(max(1, min(10000, args.limit))), end="")
+            return 0
+
         if args.cmd in ("status", "pressure"):
             if not getattr(args, "watch", False):
                 _print_json(_status_payload(state, config))
