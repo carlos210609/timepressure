@@ -13,6 +13,9 @@ from .innovation import intelligence_snapshot
 from .revenue import RevenueOpportunity, RevenueAttempt, score_revenue_opportunity, revenue_snapshot
 from marketplace_hub import snapshot as marketplace_snapshot
 from .autonomy import get_policy
+from .wallet_engine import WalletEngine
+from .risk_engine import RiskEngine
+from .capital_dashboard import CAPITAL_HTML
 from marketplace_registry import list_marketplaces, status as marketplace_status, select as marketplace_select
 from marketplace_accounts import public_status as marketplace_account_status
 from .health import system_health
@@ -190,6 +193,9 @@ def serve(config, store, state, host=None, port=8787):
             if path == "/":
                 self._send(200, "text/html; charset=utf-8", INDEX)
                 return
+            if path == "/capital":
+                self._send(200, "text/html; charset=utf-8", CAPITAL_HTML)
+                return
             if path == "/api/chat":
                 length = int(self.headers.get("Content-Length", "0"))
                 if length > 20000:
@@ -218,6 +224,9 @@ def serve(config, store, state, host=None, port=8787):
                 except Exception as exc:
                     self._send(500, "application/json; charset=utf-8", json.dumps({"error": str(exc)}, ensure_ascii=False))
                 return
+            if path == "/api/capital":
+                wallet=WalletEngine(config.data_dir); risk=RiskEngine(config.data_dir)
+                self._send(200, "application/json; charset=utf-8", json.dumps({"wallet":wallet.snapshot(),"risk":risk.snapshot()},ensure_ascii=False)); return
             if path == "/api/state":
                 payload = dashboard_payload(state, config)
                 payload["chatgpt"] = oauth.connected()
@@ -403,6 +412,18 @@ def serve(config, store, state, host=None, port=8787):
 
         def do_POST(self):
             path = urlparse(self.path).path
+            if path == '/api/capital':
+                length=int(self.headers.get('Content-Length','0'))
+                try:
+                    body=json.loads(self.rfile.read(length) or b'{}'); risk=RiskEngine(config.data_dir)
+                    action=body.get('action')
+                    if action=='mode': result=risk.set_mode(str(body.get('value')))
+                    elif action=='switch': result=risk.set_switch(str(body.get('name')),bool(body.get('value')))
+                    else: raise ValueError('Use action=mode or action=switch.')
+                    self._send(200,'application/json; charset=utf-8',json.dumps(result,ensure_ascii=False))
+                except Exception as exc:
+                    self._send(400,'application/json; charset=utf-8',json.dumps({'error':str(exc)},ensure_ascii=False))
+                return
             if path != '/api/pressure':
                 self._send(404, 'text/plain; charset=utf-8', 'Not found')
                 return
