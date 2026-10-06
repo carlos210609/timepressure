@@ -252,8 +252,13 @@ def main(argv=None):
             return 0
 
         if args.cmd == "marketplaces":
-            orchestrator = Orchestrator(state, store)
-            tasks = orchestrator.discover(max(1, min(args.limit, 50)))
+            if args.action == "status":
+                _print_json({
+                    "marketplaces": marketplace_snapshot(),
+                    "accounts": marketplace_account_status(),
+                })
+                return 0
+            tasks = marketplace_discover(max(1, min(args.limit, 50)))
             _print_json({
                 "marketplaces": marketplace_snapshot(),
                 "accounts": marketplace_account_status(),
