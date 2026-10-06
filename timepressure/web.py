@@ -11,6 +11,7 @@ from .pressure import calculate_pressure
 from .traffic import traffic_snapshot
 from .innovation import intelligence_snapshot
 from .revenue import RevenueOpportunity, RevenueAttempt, score_revenue_opportunity, revenue_snapshot
+from marketplace_hub import snapshot as marketplace_snapshot
 
 
 INDEX = r"""<!doctype html>
@@ -42,6 +43,7 @@ pre{white-space:pre-wrap;word-break:break-word;margin:0;color:#d7dce5;font:12px/
 <div class="card"><div class="label">Pressure</div><div class="value" id="pressure">0%</div><div class="sub" id="status">alive</div></div>
 <div class="card"><div class="label">Time remaining</div><div class="value" id="left">—</div><div class="sub" id="deadline">—</div></div>
 <div class="card"><div class="label">Traffic</div><div class="value" id="traffic">—</div><div class="sub" id="trafficTarget">No campaign</div></div>
+<div class="card"><div class="label">Marketplaces</div><div class="value" id="marketplaceCount">0</div><div class="sub" id="marketplaceSub">No connectors</div></div>
 <div class="card"><div class="label">ChatGPT</div><div class="value" id="chatgpt">—</div><div class="sub" id="model">—</div></div>
 </div>
 <div class="card pressure-control"><div class="head"><div><h2>Pressure Control</h2><div class="sub">Ajuste a intensidade sem usar o chat.</div></div><span class="badge" id="pressureMode">NORMAL</span></div><div style="display:flex;align-items:end;justify-content:space-between;gap:18px;margin:12px 0 6px"><div><div class="label">Pressure intensity</div><div class="value" id="pressureSetting">25%</div></div><div class="sub" id="pressureMultiplier">1.50× multiplier</div></div><input id="pressureSlider" type="range" min="0" max="100" step="1" value="25" style="width:100%;accent-color:var(--accent)"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px"><button class="pressureBtn" data-pressure="0">LOW</button><button class="pressureBtn" data-pressure="25">NORMAL</button><button class="pressureBtn" data-pressure="75">HIGH</button><button class="pressureBtn" data-pressure="100">EXTREME</button></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:12px"><small id="pressureHint" class="sub">Balanced execution intensity.</small><button id="applyPressure" style="border:1px solid var(--line);background:#18202c;color:#fff;border-radius:9px;padding:9px 14px;font-weight:700">Apply pressure</button></div><div id="pressureFeedback" class="sub" style="min-height:16px;margin-top:8px"></div></div><div class="section">
@@ -74,6 +76,7 @@ function render(d){
  $('status').innerHTML='<span class="'+statusClass(d.status)+'">'+esc(d.status)+'</span>';
  const left=Math.max(0,d.secondsLeft||0); $('left').textContent=left>3600?Math.floor(left/3600)+'h '+Math.floor((left%3600)/60)+'m':Math.floor(left/60)+'m '+left%60+'s';
  $('deadline').textContent=d.deadline||'—'; $('chatgpt').innerHTML=d.chatgpt?'<span class="green">Connected</span>':'<span class="red">Disconnected</span>'; $('model').textContent=d.model||'—';
+ const ms=d.marketplaces||[]; $('marketplaceCount').textContent=ms.filter(x=>x.configured).length+'/'+ms.length; $('marketplaceSub').textContent=ms.filter(x=>x.configured).map(x=>x.marketplace).join(' · ')||'No connectors configured';
  const so=d.social||{}; $('accounts').textContent=(so.totals||{}).accounts||0; $('socialsub').textContent=((so.totals||{}).connected||0)+' connected · '+((so.totals||{}).published||0)+' published'; const tr=d.traffic||{}; $('traffic').textContent=tr.active?(tr.verified_visits||0)+' / '+(tr.target_visits||0):'—'; $('trafficTarget').textContent=tr.active?((tr.progress||0).toFixed(1)+'% · '+esc(tr.status)): 'No campaign';
  const re=d.revenueEngine||{}; const rs=re.summary||{}; const nx=re.next; $('revenueEngine').textContent=JSON.stringify({verifiedRevenueUsd:((rs.verifiedRevenueCents||0)/100).toFixed(2),verifiedCostUsd:((rs.verifiedCostCents||0)/100).toFixed(2),netProfitUsd:((rs.netProfitCents||0)/100).toFixed(2),roiPct:rs.roiPct,nextOpportunity:nx?{title:nx.title,category:nx.category,expectedProfitUsd:((nx.expectedProfitCents||0)/100).toFixed(2),hourlyValueUsd:((nx.hourlyValueCents||0)/100).toFixed(2),probability:Math.round((nx.probability||0)*100)+'%',risk:Math.round((nx.risk||0)*100)+'%'}:null},null,2);
  $('thought').textContent=d.lastThought||'Waiting for agent activity…'; const dc=d.decision||{}; $('focus').textContent=dc.last_action?('Focus: '+dc.focus+' · '+dc.last_action+' · failures: '+(dc.consecutive_failures||0)):'No active focus.';
@@ -148,6 +151,7 @@ def dashboard_payload(state, config):
         "social": social_snapshot(state),
         "intelligence": intelligence_snapshot(state, config),
         "revenueEngine": _revenue_engine_payload(state),
+        "marketplaces": marketplace_snapshot(),
     }
 
 
