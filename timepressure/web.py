@@ -12,6 +12,7 @@ from .traffic import traffic_snapshot
 from .innovation import intelligence_snapshot
 from .revenue import RevenueOpportunity, RevenueAttempt, score_revenue_opportunity, revenue_snapshot
 from marketplace_hub import snapshot as marketplace_snapshot
+from .autonomy import get_policy
 from marketplace_registry import list_marketplaces, status as marketplace_status, select as marketplace_select
 from marketplace_accounts import public_status as marketplace_account_status
 from .health import system_health
@@ -235,6 +236,24 @@ def serve(config, store, state, host=None, port=8787):
                 except Exception as exc:
                     self._send(400, 'application/json; charset=utf-8', json.dumps({'error': str(exc)}, ensure_ascii=False))
                 return
+            if path == '/api/autonomy':
+                length = int(self.headers.get('Content-Length', '0'))
+                if length > 2000:
+                    self._send(413, 'application/json; charset=utf-8', json.dumps({'error': 'Request too large'}))
+                    return
+                try:
+                    body = json.loads(self.rfile.read(length) or b'{}')
+                    policy = get_policy(config.data_dir)
+                    if body.get('action') == 'level':
+                        result = policy.set_level(int(body.get('value')))
+                    elif body.get('action') == 'set-limit':
+                        result = policy.set_limit(str(body.get('key')), float(body.get('value')))
+                    else:
+                        raise ValueError('Use action=level or action=set-limit.')
+                    self._send(200, 'application/json; charset=utf-8', json.dumps(result, ensure_ascii=False))
+                except (TypeError, ValueError) as exc:
+                    self._send(400, 'application/json; charset=utf-8', json.dumps({'error': str(exc)}, ensure_ascii=False))
+                return
             if path != '/api/pressure':
                 self._send(404, 'text/plain; charset=utf-8', 'Not found')
                 return
@@ -341,6 +360,7 @@ def dashboard_payload(state, config):
         "intelligence": intelligence_snapshot(state, config),
         "revenueEngine": _revenue_engine_payload(state),
         "marketplaces": marketplace_snapshot(),
+        "autonomy": get_policy(config.data_dir).snapshot(),
     }
 
 
