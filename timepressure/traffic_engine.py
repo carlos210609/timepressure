@@ -113,6 +113,13 @@ def queue_growth_drafts(state, target_url: str, campaign: str = "timepressure-gr
         if not account.enabled or not account.connected:
             continue
         url = campaign_url(target_url, account.platform, medium="social", campaign=campaign)
+        recent = [
+            p for p in state.social_posts
+            if p.account_id == account.id and p.campaign == campaign and p.url == url
+            and (time.time() - p.created_at) < 86400
+        ]
+        if recent:
+            continue
         text = (
             f"Useful resource: {urlparse(target_url).netloc}. "
             "Sharing this resource for people who are actively interested in the topic."
