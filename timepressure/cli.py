@@ -21,6 +21,7 @@ from .revenue import RevenueOpportunity, RevenueAttempt, select_next_opportunity
 from marketplace_hub import discover_all as marketplace_discover_all, snapshot as marketplace_snapshot, score as marketplace_score
 from marketplace_accounts import public_status as marketplace_account_status
 from .health import system_health
+from .orchestrator import Orchestrator
 
 
 def _status_payload(state, config):
@@ -251,11 +252,16 @@ def main(argv=None):
             return 0
 
         if args.cmd == "marketplaces":
-            tasks, errors = marketplace_discover_all(max(1, min(args.limit, 50)))
+            orchestrator = Orchestrator(state, store)
+            tasks = orchestrator.discover(max(1, min(args.limit, 50)))
             _print_json({
                 "marketplaces": marketplace_snapshot(),
+                "accounts": marketplace_account_status(),
                 "tasks": [dict(vars(x), score=marketplace_score(x)) for x in tasks],
-                "errors": errors,
+                "errors": state.marketplace_errors,
+                "decision": state.decision,
+                "learning": state.learning,
+                "health": system_health(marketplace_account_status(), state),
             })
             return 0
 
