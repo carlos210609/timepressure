@@ -77,10 +77,11 @@ jobs:
           from timepressure.browser import Browser
           from timepressure.models import PressureState, State
           from timepressure.store import Store
-          from timepressure.config import Config
+          from timepressure.config import load_config
 
           with tempfile.TemporaryDirectory() as tmp:
-              config = Config(1, 3600000, 10000, tmp, "gpt-5.6", None, "https://api.openai.com/v1", "auto", None, "nvidia/nemotron-3-super-120b-a12b", "https://integrate.api.nvidia.com/v1", True, True, True, ["example.com"], "http://127.0.0.1:9332/", None, None, None, 0.001, False, None, False)
+              config = load_config()
+              config.data_dir = tmp
               store = Store(tmp)
               state = store.init(1, 3600000)
               browser = Browser(config, state, store)
