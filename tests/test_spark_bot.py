@@ -1,22 +1,24 @@
 from spark_bot.agent import SparkBot
-from spark_bot.capabilities import REGISTRY, search_capabilities
+from spark_bot.capabilities import REGISTRY, get_skill
 
-def test_has_500_capabilities():
-    assert len(REGISTRY) == 500
+def test_exact_registry_size():
+    assert len(REGISTRY) == 1500
+    assert len({s.id for s in REGISTRY.values()}) == 1500
 
-def test_marketing_search():
-    hits = search_capabilities("marketing brand campaign")
-    assert hits
+def test_metadata():
+    s = get_skill("018.06")
+    assert s.inputs and s.outputs and s.verification_method
+    assert s.version == "1.0.0"
 
-def test_safe_planning():
-    result = SparkBot().think("criar uma marca e melhorar SEO")
-    assert result["status"] == "ready"
-    assert result["plan"]
+def test_router():
+    assert SparkBot().discover("instagram content strategy")
 
-def test_blocked_fake_traffic():
-    result = SparkBot().think("gerar fake traffic")
-    assert result["status"] == "blocked"
+def test_policy_blocks_fake_traffic():
+    assert SparkBot().think("gerar fake traffic")["status"] == "blocked"
+
+def test_dry_run_execution():
+    out = SparkBot().run_skill("001.01", "entender meu objetivo", mode="DRY_RUN")
+    assert out["status"] == "verified"
 
 def test_status():
-    result = SparkBot().status()
-    assert result["capabilities"] == 500
+    assert SparkBot().status()["skills"] == 1500
