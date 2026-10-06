@@ -18,10 +18,9 @@ from .traffic import campaign_url, record_visit, start_campaign, traffic_snapsho
 from .social import approve_post, mark_published, queue_post, record_metrics, register_account, social_snapshot
 from .innovation import intelligence_snapshot
 from .revenue import RevenueOpportunity, RevenueAttempt, select_next_opportunity, start_attempt, complete_attempt, revenue_snapshot, score_revenue_opportunity
-from marketplace_hub import discover_all as marketplace_discover_all, snapshot as marketplace_snapshot, score as marketplace_score
+from okx_ai import discover as marketplace_discover, snapshot as marketplace_snapshot, score as marketplace_score
 from marketplace_accounts import public_status as marketplace_account_status
 from .health import system_health
-from .orchestrator import Orchestrator
 
 
 def _status_payload(state, config):
@@ -86,7 +85,7 @@ def _run_agent(config, store, state, once=False):
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="timepressure",
-        description="TimePressure — autonomous multi-marketplace task execution engine driven by time pressure.",
+        description="TimePressure — autonomous OKX.AI Task Marketplace agent driven by time pressure.",
     )
     parser.add_argument("--version", action="version", version="TimePressure 1.0.0")
     sub = parser.add_subparsers(dest="cmd")
@@ -107,8 +106,8 @@ def build_parser():
     sub.add_parser("reset", help="Reset the current survival cycle.")
     sub.add_parser("hunt", help="Discover public paid opportunities and queue the best ones.")
     sub.add_parser("tasks", help="Show active multitask opportunities and learned strategy stats.")
-    marketplaces = sub.add_parser("marketplaces", help="Scan and rank work across configured agent marketplaces.")
-    marketplaces.add_argument("--limit", type=int, default=10, help="Tasks per marketplace.")
+    marketplaces = sub.add_parser("marketplaces", help="Scan and rank work on the OKX.AI Task Marketplace.")
+    marketplaces.add_argument("--limit", type=int, default=10, help="Maximum OKX.AI tasks to inspect.")
 
     traffic = sub.add_parser("traffic", help="Run a legitimate website traffic campaign.")
     traffic_sub = traffic.add_subparsers(dest="sub", required=True)
