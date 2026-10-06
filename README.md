@@ -181,3 +181,34 @@ python3 -m compileall timepressure timepressure.py okx_ai.py marketplace_runner.
 
 ## License
 MIT.
+## Capital / Wallet
+
+The financial control plane is separate from the Litecoin blockchain integration. The internal Wallet Engine is an auditable USD ledger, not a blockchain wallet.
+
+Commands: `python3 timepressure.py capital status`, `python3 timepressure.py capital mode paper`, `python3 timepressure.py capital mode live`, `python3 timepressure.py capital switch emergency_stop on`, `python3 timepressure.py savings status`, `python3 timepressure.py savings verify`.
+
+Live financial execution is disabled by default. Emergency Stop blocks new financial operations. Reserved funds cannot be debited automatically.
+
+Default revenue allocation: 70% reserve, 20% savings/growth, 10% trading/experimental. The percentages are configurable only when they total 100%.
+
+## Arbitrage Engine
+
+Read-only market discovery currently supports documented public market-data endpoints for Coinbase Exchange and Kraken. No order endpoint is called by the discovery adapters.
+
+Command: `python3 timepressure.py arbitrage scan --asset BTC`.
+
+The engine timestamps quotes, rejects stale data, calculates spread, fees, slippage, transfer cost, net profit, ROI and risk, then sends plans through RiskEngine. Paper mode is the default. Live mode does not itself authorize an order adapter.
+
+## Bug Bounty Engine
+
+The bounty subsystem is scope-aware and does not perform vulnerability exploitation.
+
+Commands: `python3 timepressure.py bounty status`, `python3 timepressure.py bounty discover --limit 25`, `python3 timepressure.py bounty rank`, `python3 timepressure.py bounty report FINDING_ID`.
+
+Bugcrowd discovery uses its documented API only when `TIMEPRESSURE_BUGCROWD_TOKEN` is configured. Programs start as ineligible until scope, rules and automation permissions are explicitly confirmed. Reports remain drafts until reviewed.
+
+Workflow states: DISCOVERED -> ELIGIBLE -> RESEARCHING -> FINDING -> VALIDATING -> REPORTING -> SUBMITTED -> TRIAGED -> ACCEPTED/REJECTED -> PAID.
+
+Capital dashboard: `http://localhost:8787/capital`.
+
+The dashboard exposes wallet balances, ledger history, Paper/Live controls and Emergency Stop. Credentials are never rendered.
