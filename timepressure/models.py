@@ -88,12 +88,14 @@ class State:
     traffic_events: list[TrafficEvent] = field(default_factory=list)
     social_accounts: list[Any] = field(default_factory=list)
     social_posts: list[Any] = field(default_factory=list)
-    working_goal: str = "Generate legitimate value and record verified revenue."
+    working_goal: str = "Find and execute the highest-value legitimate task available across connected marketplaces, then submit and verify the result."
     working_plan: list[str] = field(default_factory=list)
     last_thought: str | None = None
     revenue_opportunities: list[dict] = field(default_factory=list)
     revenue_attempts: list[dict] = field(default_factory=list)
     revenue_cost_cents: int = 0
+    marketplace_tasks: list[dict] = field(default_factory=list)
+    marketplace_errors: list[dict] = field(default_factory=list)
     # Persistent decision state prevents strategy thrashing between ticks.
     decision: dict[str, Any] = field(default_factory=dict)
     learning: dict[str, Any] = field(default_factory=dict)
@@ -127,6 +129,8 @@ class State:
             "revenueOpportunities": self.revenue_opportunities[-100:],
             "revenueAttempts": self.revenue_attempts[-100:],
             "revenueCostCents": self.revenue_cost_cents,
+            "marketplaceTasks": self.marketplace_tasks[-100:],
+            "marketplaceErrors": self.marketplace_errors[-50:],
             "decision": self.decision,
             "learning": self.learning,
         }
@@ -176,12 +180,14 @@ class State:
              for x in d.get("trafficEvents", [])],
             [SocialAccount(**x) for x in d.get("socialAccounts", [])],
             [SocialPost(**x) for x in d.get("socialPosts", [])],
-            d.get("working", {}).get("goal", "Generate legitimate value and record verified revenue."),
+            d.get("working", {}).get("goal", "Find and execute the highest-value legitimate task available across connected marketplaces, then submit and verify the result."),
             d.get("working", {}).get("plan", []),
             d.get("working", {}).get("lastThought"),
             list(d.get("revenueOpportunities", [])),
             list(d.get("revenueAttempts", [])),
             int(d.get("revenueCostCents", 0)),
+            list(d.get("marketplaceTasks", [])),
+            list(d.get("marketplaceErrors", [])),
             dict(d.get("decision", {})),
             dict(d.get("learning", {})),
         )
