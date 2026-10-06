@@ -8,7 +8,7 @@ import time
 import uuid
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 from .security import assert_https_public_url
-from .models import TrafficEvent, TrafficState
+from .models import TrafficEvent, TrafficState, PressureState
 
 def campaign_url(target_url: str, source: str, medium: str = "traffic", campaign: str = "timepressure") -> str:
     parsed = assert_https_public_url(target_url)
@@ -20,7 +20,17 @@ def start_campaign(state, target_url: str, target_visits: int, campaign: str) ->
     if target_visits <= 0:
         raise ValueError("Traffic target must be positive.")
     assert_https_public_url(target_url)
-    state.traffic = TrafficState(str(uuid.uuid4()), target_url, campaign, target_visits, 0, time.time(), "active")
+    started = time.time()
+    state.traffic = TrafficState(str(uuid.uuid4()), target_url, campaign, target_visits, 0, started, "active")
+    state.pressure = PressureState(
+        started,
+        target_visits,
+        0,
+        0.0,
+        "alive",
+        started + max(60.0, state.pressure.deadline - state.pressure.cycle_started_at),
+        None,
+    )
     state.working_goal = f"Generate legitimate, measurable traffic to {target_url}"
     return state.traffic
 
@@ -36,6 +46,15 @@ def record_visit(state, source: str, visits: int = 1, reference: str | None = No
     state.traffic_events.append(event)
     state.traffic_events = state.traffic_events[-5000:]
     state.traffic.verified_visits += visits
+    state.pressure = PressureState(
+        state.pressure.cycle_started_at,
+        state.traffic.target_visits,
+        state.traffic.verified_visits,
+        state.pressure.pressure,
+        state.pressure.status,
+        state.pressure.deadline,
+        time.time(),
+    )
     if state.traffic.verified_visits >= state.traffic.target_visits:
         state.traffic.status = "completed"
     return event
