@@ -101,6 +101,7 @@ class State:
     learning: dict[str, Any] = field(default_factory=dict)
     executions: list[dict[str, Any]] = field(default_factory=list)
     verified_ledger: list[dict[str, Any]] = field(default_factory=list)
+    target_url: str | None = None
 
     def to_dict(self):
         return {
