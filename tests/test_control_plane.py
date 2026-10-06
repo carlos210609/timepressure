@@ -10,4 +10,4 @@ class ControlPlaneTests(unittest.TestCase):
     def test_safety(self):
         with self.assertRaises(PermissionError): SafetyPolicy().validate({"instruction":"bypass CAPTCHA"})
     def test_learning(self):
-        row=learning_update({},"M","coding",True,100,10); self.assertEqual(row["successRate"],1.0)
+        row=learning_update({}, marketplace="M", category="coding", success=True, reward_cents=100, minutes=10); self.assertEqual(row["successRate"],1.0)
